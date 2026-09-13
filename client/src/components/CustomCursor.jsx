@@ -27,15 +27,15 @@ const CustomCursor = () => {
 
   return (
     <>
-      {/* Outer Springy Ring */}
+      {/* Outer Springy Ring (Hidden on touch/mobile devices) */}
       <motion.div
-        className="fixed top-0 left-0 w-8 h-8 rounded-full border border-white/50 mix-blend-difference pointer-events-none z-[9999]"
+        className="hidden md:block fixed top-0 left-0 w-8 h-8 rounded-full border border-white/50 mix-blend-difference pointer-events-none z-[9999]"
         style={{ x: cursorX, y: cursorY }}
       />
-      {/* Inner Immediate Dot */}
+      {/* Inner Immediate Dot (Hidden on touch/mobile devices) */}
       <div 
         ref={cursorRef}
-        className="fixed top-0 left-0 w-2 h-2 bg-white rounded-full mix-blend-difference pointer-events-none z-[9999] transition-transform duration-0"
+        className="hidden md:block fixed top-0 left-0 w-2 h-2 bg-white rounded-full mix-blend-difference pointer-events-none z-[9999] transition-transform duration-0"
       />
     </>
   );

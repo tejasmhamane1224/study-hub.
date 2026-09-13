@@ -1,76 +1,361 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, LogIn, Loader } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { GraduationCap, LogIn, UserPlus, Loader, AlertCircle, Sparkles, ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import Lenis from '@studio-freight/lenis';
 import api from '../services/api';
+import Scene3D from '../components/Scene3D';
+import Animated3DIntro from '../components/Animated3DIntro';
 
 const Login = () => {
   const navigate = useNavigate();
+  
+  // Auth state
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('student');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  // Intro & Scrollytelling state
+  const [showIntro, setShowIntro] = useState(true);
+  const [isEntering, setIsEntering] = useState(false);
+  const [isEnteringWorkspace, setIsEnteringWorkspace] = useState(false);
 
-  const handleLogin = async (e) => {
+  // Global window scroll tracking with buttery smooth spring physics
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+  
+  // Text section opacities tied to scroll
+  const section1Opacity = useTransform(smoothProgress, [0, 0.12, 0.22], [1, 1, 0]);
+  const section1Y = useTransform(smoothProgress, [0, 0.22], [0, -40]);
+
+  const section2Opacity = useTransform(smoothProgress, [0.24, 0.36, 0.48], [0, 1, 0]);
+  const section2Y = useTransform(smoothProgress, [0.24, 0.36, 0.48], [40, 0, -40]);
+
+  const section3Opacity = useTransform(smoothProgress, [0.50, 0.62, 0.74], [0, 1, 0]);
+  const section3Y = useTransform(smoothProgress, [0.50, 0.62, 0.74], [40, 0, -40]);
+  
+  // Final Auth Card appears at the end of scroll
+  const formOpacity = useTransform(smoothProgress, [0.76, 0.94], [0, 1]);
+  const formY = useTransform(smoothProgress, [0.76, 0.94], [60, 0]);
+
+  // Lock scroll while the initial intro HUD is active
+  useEffect(() => {
+    if (showIntro) {
+      document.body.style.overflow = 'hidden';
+      return;
+    } 
+    
+    document.body.style.overflow = 'auto';
+
+    // Initialize ultra-smooth Lenis scroll once the intro finishes
+    const lenis = new Lenis({
+      duration: 1.4,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // standard easing
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+      smoothTouch: false,
+      touchMultiplier: 2,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+      document.body.style.overflow = 'auto';
+    };
+  }, [showIntro]);
+
+  const handleStartExperience = () => {
+    setIsEntering(true);
+    setTimeout(() => {
+      setShowIntro(false);
+      setIsEntering(false);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }, 600);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading || isEnteringWorkspace) return;
     setLoading(true);
+    setError('');
+    
     try {
-      const res = await api.post('/auth/login', { email, password });
+      let res;
+      if (authMode === 'login') {
+        res = await api.post('/auth/login', { email, password });
+      } else {
+        res = await api.post('/auth/register', { name, email, password, role });
+      }
+      
       localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user || { name: 'Student' }));
-      navigate('/');
+      localStorage.setItem('user', JSON.stringify(res.data.user || { name: name || 'Student' }));
+      
+      // Start smooth cinematic warp transition
+      setIsEnteringWorkspace(true);
+      setIsEntering(true);
+      
+      // Smoothly navigate after the animation plays gracefully
+      setTimeout(() => {
+        navigate('/');
+      }, 750);
     } catch (err) {
-      alert(err.response?.data?.message || err.message || 'Login failed');
-    } finally {
+      setError(err.response?.data?.message || err.message || 'Authentication failed. Please check your credentials.');
       setLoading(false);
     }
   };
 
   return (
-    <div 
-      className="flex justify-center items-center min-h-screen w-full p-4 text-slate-100"
-      style={{
-        backgroundColor: '#050b14',
-        backgroundImage: `
-          radial-gradient(circle at 15% 50%, rgba(6, 182, 212, 0.25), transparent 30%),
-          radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.25), transparent 30%),
-          radial-gradient(circle at 50% 100%, rgba(14, 165, 233, 0.2), transparent 40%)
-        `,
-        backgroundAttachment: 'fixed'
-      }}
-    >
-      <div className="glass-card w-full max-w-md p-10">
-        <div className="text-center text-3xl text-cyan-400 font-bold mb-8 flex items-center justify-center gap-2">
-          <GraduationCap size={32} /> STUDY HUB
-        </div>
-        <h2 className="text-center text-xl font-semibold mb-6 text-white">Welcome Back</h2>
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <input 
-            type="email" 
-            placeholder="Email Address" 
-            required
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            className="glass-input"
+    <div className="relative w-full min-h-[420vh] bg-transparent text-slate-100 selection:bg-white/20">
+      {/* 3D WebGL Canvas (Continuous Centerpiece Model + Particles) */}
+      <Scene3D showIntro={showIntro} isEntering={isEntering} />
+
+      {/* Grid Lines Overlay */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none z-10" />
+
+      {/* Intro Gate HUD */}
+      <AnimatePresence>
+        {showIntro && (
+          <Animated3DIntro 
+            onEnter={handleStartExperience} 
+            isEntering={isEntering}
+            title="STUDY HUB" 
+            subtitle="ACTIVE THEORY SCROLLYTELLING // 3D CORE" 
           />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            required
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            className="glass-input"
-          />
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium flex justify-center items-center gap-2 transition-colors disabled:opacity-70 mt-2"
+        )}
+      </AnimatePresence>
+
+      {/* Scrollytelling Typography Stages */}
+      {!showIntro && (
+        <div className="fixed inset-0 pointer-events-none flex flex-col justify-center items-center px-6 z-20">
+          
+          {/* Stage 1 */}
+          <motion.div 
+            style={{ opacity: section1Opacity, y: section1Y }} 
+            className="absolute text-center flex flex-col items-center max-w-3xl"
           >
-            {loading ? <Loader className="animate-spin" size={20} /> : <><LogIn size={20} /> Login</>}
-          </button>
-        </form>
-        <p className="text-center mt-6 text-slate-400">
-          Don't have an account? <Link to="/register" className="text-cyan-400 font-medium hover:underline">Register</Link>
-        </p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono tracking-widest text-slate-400 uppercase">
+              <span>01 // ARCHITECTURE</span>
+            </div>
+            <h2 className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-tighter mb-4 text-white drop-shadow-[0_0_35px_rgba(255,255,255,0.3)]">
+              IMMERSIVE<br/>WORKSPACE
+            </h2>
+            <p className="text-slate-400 font-mono text-xs sm:text-sm tracking-widest uppercase leading-relaxed max-w-lg">
+              Spatial cognitive environment designed for hyper-focus and distraction-free deep study.
+            </p>
+            <motion.div 
+              animate={{ y: [0, 8, 0] }} 
+              transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+              className="mt-12 text-white/60 flex flex-col items-center gap-2"
+            >
+              <span className="text-[10px] tracking-[0.3em] font-mono uppercase">SCROLL TO DIVE</span>
+              <ChevronDown size={20} />
+            </motion.div>
+          </motion.div>
+
+          {/* Stage 2 */}
+          <motion.div 
+            style={{ opacity: section2Opacity, y: section2Y }} 
+            className="absolute text-center flex flex-col items-center max-w-3xl"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono tracking-widest text-slate-400 uppercase">
+              <span>02 // TELEMETRY</span>
+            </div>
+            <h2 className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-tighter mb-4 text-white drop-shadow-[0_0_35px_rgba(255,255,255,0.3)]">
+              NEURAL<br/>ANALYTICS
+            </h2>
+            <p className="text-slate-400 font-mono text-xs sm:text-sm tracking-widest uppercase leading-relaxed max-w-lg">
+              Real-time velocity metrics, retention intervals, and predictive mastery tracking across subjects.
+            </p>
+          </motion.div>
+
+          {/* Stage 3 */}
+          <motion.div 
+            style={{ opacity: section3Opacity, y: section3Y }} 
+            className="absolute text-center flex flex-col items-center max-w-3xl"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono tracking-widest text-slate-400 uppercase">
+              <span>03 // INTELLIGENCE</span>
+            </div>
+            <h2 className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-tighter mb-4 text-white drop-shadow-[0_0_35px_rgba(255,255,255,0.3)]">
+              AI TUTOR<br/>NODE
+            </h2>
+            <p className="text-slate-400 font-mono text-xs sm:text-sm tracking-widest uppercase leading-relaxed max-w-lg">
+              Context-aware problem solving, formula derivation, and structured concept mastery on demand.
+            </p>
+          </motion.div>
+
+        </div>
+      )}
+
+      {/* Stage 4: Authentication Gate at the End of Scroll */}
+      <div className="absolute bottom-0 w-full h-screen flex items-center justify-center p-4 z-30 pointer-events-none">
+        <motion.div 
+          style={{ opacity: formOpacity, y: formY }}
+          animate={isEnteringWorkspace ? {
+            opacity: 0,
+            scale: 0.94,
+            y: -24,
+            filter: 'blur(16px)',
+            transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] }
+          } : {}}
+          className="relative w-full max-w-md p-8 md:p-10 bg-[#0A0A0A]/95 border border-white/10 rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.95)] backdrop-blur-2xl pointer-events-auto"
+        >
+          {/* Brand Header */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white mb-3 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+              <GraduationCap size={24} />
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-white uppercase">STUDY HUB</h1>
+            <p className="text-xs font-mono tracking-widest text-slate-400 mt-1 uppercase">AUTHENTICATION GATE</p>
+          </div>
+
+          {/* Mode Switcher Tabs (Sign In / Register) */}
+          <div className="grid grid-cols-2 gap-1 p-1 bg-white/5 rounded-xl border border-white/10 mb-6">
+            <button
+              type="button"
+              onClick={() => { setAuthMode('login'); setError(''); }}
+              className={`py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-all ${
+                authMode === 'login' ? 'bg-white text-black font-bold shadow' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAuthMode('register'); setError(''); }}
+              className={`py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-all ${
+                authMode === 'register' ? 'bg-white text-black font-bold shadow' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Register
+            </button>
+          </div>
+
+          {/* Error Notification */}
+          {error && (
+            <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2.5 animate-slide-up">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {authMode === 'register' && (
+              <div>
+                <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Full Name</label>
+                <input 
+                  type="text" 
+                  placeholder="Alex Walker" 
+                  required
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className="stealth-input"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Email Address</label>
+              <input 
+                type="email" 
+                placeholder="student@studyhub.internal" 
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="stealth-input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Password</label>
+              <input 
+                type="password" 
+                placeholder="••••••••••••" 
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="stealth-input"
+              />
+            </div>
+
+            {authMode === 'register' && (
+              <div>
+                <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Account Role</label>
+                <select 
+                  value={role}
+                  onChange={e => setRole(e.target.value)}
+                  className="stealth-input bg-[#0A0A0A] text-white"
+                >
+                  <option value="student" className="bg-black text-white">Student</option>
+                  <option value="teacher" className="bg-black text-white">Teacher / Instructor</option>
+                </select>
+              </div>
+            )}
+
+            <button 
+              type="submit" 
+              disabled={loading || isEnteringWorkspace}
+              className="w-full mt-2 py-3.5 bg-white text-black font-bold text-xs uppercase tracking-[0.2em] rounded-xl hover:bg-slate-200 active:scale-[0.98] transition-all duration-200 flex justify-center items-center gap-2 disabled:opacity-80 cursor-pointer shadow-[0_0_25px_rgba(255,255,255,0.2)]"
+            >
+              {isEnteringWorkspace ? (
+                <div className="flex items-center gap-2">
+                  <Sparkles className="animate-spin text-black" size={16} />
+                  <span>INITIALIZING WORKSPACE...</span>
+                </div>
+              ) : loading ? (
+                <Loader className="animate-spin text-black" size={18} />
+              ) : authMode === 'login' ? (
+                <><LogIn size={16} /> Enter Workspace</>
+              ) : (
+                <><UserPlus size={16} /> Create Account</>
+              )}
+            </button>
+          </form>
+
+          {/* Replay 3D Intro Button */}
+          <div className="mt-6 pt-4 border-t border-white/5 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setShowIntro(true);
+                window.scrollTo({ top: 0, behavior: 'auto' });
+              }}
+              className="text-[10px] font-mono tracking-widest text-slate-500 hover:text-white uppercase inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Sparkles size={11} className="text-white" />
+              <span>REPLAY 3D INTRO</span>
+            </button>
+          </div>
+        </motion.div>
       </div>
+
+      {/* Fullscreen Warp Flash Fade on Enter */}
+      <AnimatePresence>
+        {isEnteringWorkspace && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-none z-50"
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

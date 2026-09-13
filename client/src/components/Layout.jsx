@@ -1,72 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  GraduationCap, 
-  PieChart, 
-  Book, 
-  CalendarCheck, 
-  LineChart, 
-  Moon, 
-  Bell, 
-  LogOut,
-  Bot
-} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Bell, User, Menu, X, Sparkles } from 'lucide-react';
+import Lenis from '@studio-freight/lenis';
+import Scene3D from './Scene3D';
+import BrunoSimonIntro from './BrunoSimonIntro';
 
-const Sidebar = () => {
+const TopNav = ({ toggleMobileMenu, onReplayIntro }) => {
   const location = useLocation();
-  
-  const navItems = [
-    { path: '/', icon: PieChart, label: 'Dashboard' },
-    { path: '/ai', icon: Bot, label: 'AI Tutor' },
-    { path: '/subjects', icon: Book, label: 'Subjects' },
-    { path: '/planner', icon: CalendarCheck, label: 'Study Planner' },
-    { path: '/analytics', icon: LineChart, label: 'Analytics' },
-  ];
-
-  return (
-    <aside className="w-[260px] ios-glass flex flex-col py-6 px-4 fixed h-screen z-50 transition-transform md:translate-x-0 -translate-x-full rounded-none rounded-r-[28px] border-l-0">
-      <div className="text-2xl font-bold text-cyan-400 mb-8 px-3 flex items-center gap-2">
-        <GraduationCap size={28} /> STUDY HUB
-      </div>
-      
-      <nav className="flex-1 flex flex-col gap-2">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path || 
-                          (item.path !== '/' && location.pathname.startsWith(item.path));
-          
-          return (
-            <Link 
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
-                isActive 
-                  ? 'bg-gradient-to-r from-cyan-500/20 to-sky-500/20 text-cyan-400 shadow-[inset_2px_0_0_#22d3ee]' 
-                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
-              }`}
-            >
-              <Icon size={20} className={isActive ? 'text-cyan-400' : 'opacity-70'} />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="mt-auto pt-6 border-t border-white/10">
-        <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all w-full font-medium">
-          <LogOut size={20} />
-          Logout
-        </button>
-      </div>
-    </aside>
-  );
-};
-
-const Topbar = () => {
   const navigate = useNavigate();
-  
-  // In a real app, this would get the user from context/Redux
-  const user = { name: "Student", initials: "ST" };
+
+  const navItems = [
+    { path: '/', label: 'Dashboard' },
+    { path: '/subjects', label: 'Subjects' },
+    { path: '/ai', label: 'AI Tutor' },
+    { path: '/planner', label: 'Focus' }
+  ];
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -74,36 +23,119 @@ const Topbar = () => {
   };
 
   return (
-    <header className="h-[72px] ios-glass flex items-center justify-between px-4 md:px-8 sticky top-0 z-40 rounded-none rounded-b-[28px] border-t-0 border-l-0 border-r-0">
-      <div>
-        <h2 className="text-lg font-semibold m-0 text-white">Student Workspace</h2>
-      </div>
-      
-      <div className="flex items-center gap-4">
-        <button className="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/10 transition-colors">
-          <Moon size={20} />
-        </button>
-        <button className="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/10 transition-colors relative">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
-        </button>
-        
-        <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/10">
-          <span className="font-medium text-sm hidden sm:block text-white">{user.name}</span>
-          <button 
-            onClick={handleLogout}
-            className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-sky-600 flex items-center justify-center font-bold text-white shadow-lg cursor-pointer"
-          >
-            <LogOut size={16} />
-          </button>
+    <header className="h-[64px] border-b border-white/[0.04] flex items-center justify-between px-6 md:px-10 sticky top-0 z-40 bg-transparent mix-blend-difference">
+      <div className="flex items-center gap-12">
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-white tracking-tighter">STUDY HUB</span>
+          <span className="text-xs text-slate-500 font-mono hidden md:block">v2.0</span>
         </div>
+        
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-1">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path || 
+                            (item.path !== '/' && location.pathname.startsWith(item.path));
+            return (
+              <Link 
+                key={item.path}
+                to={item.path}
+                className={`relative px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {item.label}
+                {isActive && (
+                  <motion.div 
+                    layoutId="nav-indicator"
+                    className="absolute inset-0 bg-white/[0.08] rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={onReplayIntro}
+          className="text-xs font-mono px-3 py-1.5 rounded-full border border-white/10 hover:border-white/30 text-slate-400 hover:text-white flex items-center gap-1.5 transition-all bg-white/[0.02]"
+          title="Replay 3D Intro Experience"
+        >
+          <Sparkles size={12} className="text-white animate-pulse" />
+          <span>INTRO</span>
+        </button>
+        <button className="text-slate-400 hover:text-white transition-colors relative">
+          <Bell size={18} />
+          <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-white rounded-full"></span>
+        </button>
+        <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
+        <button onClick={handleLogout} className="w-7 h-7 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-slate-300 hover:bg-white/20 transition-all">
+          <User size={14} />
+        </button>
+        <button onClick={toggleMobileMenu} className="md:hidden text-slate-400 hover:text-white ml-2">
+          <Menu size={20} />
+        </button>
       </div>
     </header>
   );
 };
 
+const MobileNav = ({ isOpen, setIsOpen }) => {
+  const location = useLocation();
+  const navItems = [
+    { path: '/', label: 'Dashboard' },
+    { path: '/subjects', label: 'Subjects' },
+    { path: '/ai', label: 'AI Tutor' },
+    { path: '/planner', label: 'Focus' }
+  ];
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 md:hidden"
+          />
+          <motion.div 
+            initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}
+            className="fixed top-0 left-0 right-0 bg-[#0A0A0A] border-b border-white/10 p-6 z-50 flex flex-col gap-4 md:hidden"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-lg font-bold text-white tracking-tighter">STUDY HUB</span>
+              <button onClick={() => setIsOpen(false)} className="text-slate-400"><X size={24} /></button>
+            </div>
+            {navItems.map((item) => (
+              <Link 
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsOpen(false)}
+                className={`text-lg font-medium py-2 border-b border-white/5 ${
+                  location.pathname === item.path ? 'text-white' : 'text-slate-400'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// 3D Intro handled in Scene3D now
+
 const Layout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Default to true so user gets the Stepwise flow: 1. 3D Intro -> 2. Workspace
+  const [showIntro, setShowIntro] = useState(true);
+  const [isEntering, setIsEntering] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -112,17 +144,89 @@ const Layout = () => {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    if (showIntro) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+  }, [showIntro]);
+
+  const handleEngage = () => {
+    setIsEntering(true);
+  };
+
+  const handleStart = () => {
+    setShowIntro(false);
+    setIsEntering(false);
+  };
+
+  useEffect(() => {
+    if (showIntro) return;
+
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+      mouseMultiplier: 1,
+      smoothTouch: false,
+      touchMultiplier: 2,
+      infinite: false,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, [showIntro]);
+
   return (
-    <div className="flex w-full min-h-screen text-slate-100 transition-colors duration-300 bg-transparent">
-      <Sidebar />
-      <main className="flex-1 md:ml-[260px] flex flex-col min-h-screen overflow-hidden">
-        <Topbar />
-        <div className="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar relative z-10">
-          <Outlet />
-        </div>
-      </main>
+    <div className="min-h-screen text-slate-100 font-sans relative">
+      <AnimatePresence>
+        {showIntro && (
+          <BrunoSimonIntro onEngage={handleEngage} onStart={handleStart} />
+        )}
+      </AnimatePresence>
+
+      <Scene3D showIntro={showIntro} isEntering={isEntering} />
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className={`relative z-10 flex flex-col min-h-screen ${showIntro ? 'pointer-events-none' : ''}`}
+      >
+        <TopNav 
+          toggleMobileMenu={() => setMobileMenuOpen(true)} 
+          onReplayIntro={() => setShowIntro(true)} 
+        />
+        <MobileNav isOpen={mobileMenuOpen} setIsOpen={setMobileMenuOpen} />
+        
+        <main className="flex-1 w-full max-w-[1400px] mx-auto p-6 md:p-10">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </motion.div>
     </div>
   );
 };
 
 export default Layout;
+

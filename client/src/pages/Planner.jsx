@@ -1,18 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CalendarCheck, Plus, Trash2, CheckCircle2, Circle } from 'lucide-react';
 
 const Planner = () => {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState(() => {
+    try {
+      const saved = localStorage.getItem('planner_tasks');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [newTask, setNewTask] = useState('');
-  const [reminders, setReminders] = useState('');
-
-  useEffect(() => {
-    const savedTasks = localStorage.getItem('planner_tasks');
-    if (savedTasks) setTasks(JSON.parse(savedTasks));
-
-    const savedReminders = localStorage.getItem('planner_reminders');
-    if (savedReminders) setReminders(savedReminders);
-  }, []);
+  const [reminders, setReminders] = useState(() => {
+    try {
+      return localStorage.getItem('planner_reminders') || '';
+    } catch {
+      return '';
+    }
+  });
 
   const handleReminderChange = (e) => {
     const val = e.target.value;
@@ -49,10 +54,10 @@ const Planner = () => {
 
   return (
     <div>
-      <h2 className="text-3xl font-bold mb-8 flex items-center gap-3 text-white"><CalendarCheck className="text-cyan-400" /> Study Planner</h2>
+      <h2 className="text-3xl font-bold mb-8 flex items-center gap-3 text-white"><CalendarCheck className="text-white" /> Study Planner</h2>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="glass-card p-6 border border-white/5 shadow-lg">
+        <div className="stealth-card p-6 border border-white/5 shadow-lg">
           <h3 className="text-xl font-semibold text-white mb-6">Today's Tasks</h3>
           
           <form onSubmit={addTask} className="flex gap-3 mb-6">
@@ -61,9 +66,9 @@ const Planner = () => {
               value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
               placeholder="E.g., Read Chapter 3 of Database Systems..."
-              className="glass-input flex-1 py-3 px-4 rounded-xl text-sm"
+              className="stealth-input flex-1 py-3 px-4 rounded-xl text-sm"
             />
-            <button type="submit" className="btn-glow px-4 py-2 rounded-xl">
+            <button type="submit" className="px-5 py-3 bg-white text-black font-semibold rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
               <Plus size={20} />
             </button>
           </form>
@@ -77,17 +82,17 @@ const Planner = () => {
                   key={task.id} 
                   className={`flex justify-between items-center p-4 rounded-xl border transition-all duration-300 ${
                     task.completed 
-                      ? 'bg-teal-500/10 border-teal-500/30 opacity-70' 
-                      : 'bg-white/5 border-white/10 hover:border-cyan-400/30'
+                      ? 'bg-white/[0.02] border-white/5 opacity-50' 
+                      : 'bg-white/[0.04] border-white/10 hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => toggleTask(task.id)}>
-                    {task.completed ? <CheckCircle2 className="text-teal-400" size={20} /> : <Circle className="text-slate-400" size={20} />}
-                    <span className={`text-sm ${task.completed ? 'text-slate-400 line-through' : 'text-slate-200'}`}>
+                    {task.completed ? <CheckCircle2 className="text-white" size={20} /> : <Circle className="text-slate-500" size={20} />}
+                    <span className={`text-sm ${task.completed ? 'text-slate-500 line-through font-mono' : 'text-slate-200'}`}>
                       {task.text}
                     </span>
                   </div>
-                  <button onClick={() => deleteTask(task.id)} className="text-slate-500 hover:text-red-400 transition-colors ml-4">
+                  <button onClick={() => deleteTask(task.id)} className="text-slate-500 hover:text-white transition-colors ml-4">
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -97,32 +102,64 @@ const Planner = () => {
         </div>
 
         <div className="flex flex-col gap-8">
-          <div className="glass-card p-6 border border-white/5 flex flex-col items-center justify-center min-h-[300px]">
-            <div className="w-48 h-48 rounded-full border-8 border-white/10 flex flex-col items-center justify-center mb-6 shadow-inner relative">
-               <div className="absolute inset-0 border-8 border-cyan-400 rounded-full" 
-                    style={{ 
-                      clipPath: `polygon(0 0, 100% 0, 100% ${tasks.length === 0 ? 0 : Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100)}%, 0 ${tasks.length === 0 ? 0 : Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100)}%)`,
-                      transition: 'clip-path 1s ease-in-out'
-                    }}></div>
-               <h2 className="text-4xl font-bold text-white relative z-10">
-                 {tasks.length === 0 ? 0 : Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100)}%
-               </h2>
-               <p className="text-xs text-slate-400 uppercase tracking-widest relative z-10">Done</p>
-            </div>
+          <div className="stealth-card p-6 border border-white/5 flex flex-col items-center justify-center min-h-[300px]">
+            {/* High-end SVG Circular Progress Ring */}
+            {(() => {
+              const percentage = tasks.length === 0 ? 0 : Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100);
+              const radius = 70;
+              const circumference = 2 * Math.PI * radius;
+              const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+              return (
+                <div className="relative w-48 h-48 flex items-center justify-center mb-6">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 160 160">
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r={radius}
+                      stroke="rgba(255, 255, 255, 0.08)"
+                      strokeWidth="8"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r={radius}
+                      stroke="#ffffff"
+                      strokeWidth="8"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                      className="transition-all duration-700 ease-out"
+                      style={{
+                        filter: percentage === 100 ? 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.6))' : 'none'
+                      }}
+                    />
+                  </svg>
+                  <div className="absolute flex flex-col items-center justify-center">
+                    <h2 className="text-4xl font-black text-white tracking-tighter">
+                      {percentage}%
+                    </h2>
+                    <p className="text-[10px] text-slate-400 font-mono tracking-[0.25em] uppercase">DONE</p>
+                  </div>
+                </div>
+              );
+            })()}
             <h3 className="text-lg font-medium text-white mb-2">Daily Goal Progress</h3>
             <p className="text-slate-400 text-sm text-center">Complete your tasks to fill the ring!</p>
           </div>
 
-          <div className="glass-card p-6 border border-white/5 shadow-lg flex-1 flex flex-col">
+          <div className="stealth-card p-6 border border-white/5 shadow-lg flex-1 flex flex-col">
             <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <span className="p-2 bg-purple-500/20 text-purple-400 rounded-lg"><CalendarCheck size={18} /></span> 
+              <span className="p-2 bg-white/5 text-white rounded-lg"><CalendarCheck size={18} /></span> 
               Quick Reminders
             </h3>
             <textarea 
               value={reminders}
               onChange={handleReminderChange}
               placeholder="Jot down quick notes, upcoming deadlines, or study reminders here..."
-              className="glass-input flex-1 w-full min-h-[150px] resize-none p-4 text-sm"
+              className="stealth-input flex-1 w-full min-h-[150px] resize-none p-4 text-sm"
             ></textarea>
           </div>
         </div>

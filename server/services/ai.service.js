@@ -13,7 +13,7 @@ const aiService = {
             config.systemInstruction = systemInstruction;
         }
 
-        const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash'];
+        const modelsToTry = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
         let lastError = null;
 
         for (const modelName of modelsToTry) {

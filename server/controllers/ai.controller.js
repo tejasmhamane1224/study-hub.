@@ -90,8 +90,12 @@ You MUST return the output EXACTLY as a valid JSON object with the following sch
         const quizText = await aiService.generateResponse(prompt);
         let quizData;
         try {
-            // Strip any markdown code blocks if the AI ignored the instruction
-            const cleaned = quizText.replace(/```json/g, '').replace(/```/g, '').trim();
+            // Extract JSON block even if markdown or conversational text surrounds it
+            let cleaned = quizText.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                cleaned = jsonMatch[0];
+            }
             quizData = JSON.parse(cleaned);
         } catch (e) {
             console.error("Failed to parse quiz JSON:", quizText);

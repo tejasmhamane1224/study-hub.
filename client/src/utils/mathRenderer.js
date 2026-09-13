@@ -9,7 +9,7 @@ export function renderFormattedContent(content) {
     let processed = content.replace(/\$\$([\s\S]+?)\$\$/g, (match, math) => {
       try {
         return katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
-      } catch (e) {
+      } catch {
         return match;
       }
     });
@@ -17,16 +17,16 @@ export function renderFormattedContent(content) {
     processed = processed.replace(/\\\[([\s\S]+?)\\\]/g, (match, math) => {
       try {
         return katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
-      } catch (e) {
+      } catch {
         return match;
       }
     });
 
     // 2. Replace inline math $...$ or \(...\)
-    processed = processed.replace(/\$([^\$\n]+?)\$/g, (match, math) => {
+    processed = processed.replace(/\$([^$\n]+?)\$/g, (match, math) => {
       try {
         return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
-      } catch (e) {
+      } catch {
         return match;
       }
     });
@@ -34,7 +34,7 @@ export function renderFormattedContent(content) {
     processed = processed.replace(/\\\(([\s\S]+?)\\\)/g, (match, math) => {
       try {
         return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
-      } catch (e) {
+      } catch {
         return match;
       }
     });

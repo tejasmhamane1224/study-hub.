@@ -10,6 +10,7 @@ import AiAssistant from './pages/AiAssistant';
 import Analytics from './pages/Analytics';
 import Planner from './pages/Planner';
 import SubjectsList from './pages/SubjectsList';
+import CustomCursor from './components/CustomCursor';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -22,6 +23,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <BrowserRouter>
+      <CustomCursor />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

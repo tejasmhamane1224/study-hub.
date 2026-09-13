@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, UserPlus, Loader } from 'lucide-react';
+import { GraduationCap, UserPlus, Loader, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import api from '../services/api';
+import Scene3D from '../components/Scene3D';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -10,85 +12,122 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       const res = await api.post('/auth/register', { name, email, password, role });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user || { name }));
       navigate('/');
     } catch (err) {
-      alert(err.response?.data?.message || err.message || 'Registration failed');
+      setError(err.response?.data?.message || err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div 
-      className="flex justify-center items-center min-h-screen w-full p-4 text-slate-100"
-      style={{
-        backgroundColor: '#050b14',
-        backgroundImage: `
-          radial-gradient(circle at 15% 50%, rgba(6, 182, 212, 0.25), transparent 30%),
-          radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.25), transparent 30%),
-          radial-gradient(circle at 50% 100%, rgba(14, 165, 233, 0.2), transparent 40%)
-        `,
-        backgroundAttachment: 'fixed'
-      }}
-    >
-      <div className="glass-card w-full max-w-md p-10">
-        <div className="text-center text-3xl text-cyan-400 font-bold mb-8 flex items-center justify-center gap-2">
-          <GraduationCap size={32} /> STUDY HUB
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 bg-[#000000] text-slate-100 overflow-hidden">
+      {/* 3D Background Galaxy */}
+      <Scene3D showIntro={false} />
+
+      {/* Grid Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
+
+      {/* Register Portal Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-md p-8 md:p-10 bg-[#0A0A0A]/90 border border-white/10 rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.9)] backdrop-blur-2xl"
+      >
+        {/* Brand Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white mb-4 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+            <GraduationCap size={26} />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-white uppercase">STUDY HUB</h1>
+          <p className="text-xs font-mono tracking-widest text-slate-400 mt-1 uppercase">ACCOUNT REGISTRATION</p>
         </div>
-        <h2 className="text-center text-xl font-semibold mb-6 text-white">Create an Account</h2>
+
+        {/* Error Notification */}
+        {error && (
+          <div className="mb-6 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2.5 animate-slide-up">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Form */}
         <form onSubmit={handleRegister} className="flex flex-col gap-4">
-          <input 
-            type="text" 
-            placeholder="Full Name" 
-            required
-            value={name}
-            onChange={e => setName(e.target.value)}
-            className="glass-input"
-          />
-          <input 
-            type="email" 
-            placeholder="Email Address" 
-            required
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            className="glass-input"
-          />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            required
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            className="glass-input"
-          />
-          <select 
-            value={role}
-            onChange={e => setRole(e.target.value)}
-            className="glass-input"
-          >
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-          </select>
+          <div>
+            <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Full Name</label>
+            <input 
+              type="text" 
+              placeholder="Alex Walker" 
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="stealth-input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Email Address</label>
+            <input 
+              type="email" 
+              placeholder="alex@studyhub.internal" 
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="stealth-input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Password</label>
+            <input 
+              type="password" 
+              placeholder="••••••••••••" 
+              required
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="stealth-input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Account Role</label>
+            <select 
+              value={role}
+              onChange={e => setRole(e.target.value)}
+              className="stealth-input bg-[#0A0A0A] text-white"
+            >
+              <option value="student" className="bg-black text-white">Student</option>
+              <option value="teacher" className="bg-black text-white">Teacher / Instructor</option>
+            </select>
+          </div>
+
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium flex justify-center items-center gap-2 transition-colors disabled:opacity-70 mt-2"
+            className="w-full mt-3 py-3.5 bg-white text-black font-bold text-xs uppercase tracking-[0.2em] rounded-xl hover:bg-slate-200 active:scale-[0.98] transition-all duration-200 flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer shadow-[0_0_25px_rgba(255,255,255,0.2)]"
           >
-            {loading ? <Loader className="animate-spin" size={20} /> : <><UserPlus size={20} /> Register</>}
+            {loading ? <Loader className="animate-spin text-black" size={18} /> : <><UserPlus size={16} /> Register</>}
           </button>
         </form>
-        <p className="text-center mt-6 text-slate-400">
-          Already have an account? <Link to="/login" className="text-cyan-400 font-medium hover:underline">Login</Link>
+
+        <p className="text-center mt-6 text-xs text-slate-400 font-sans">
+          Already have an account?{' '}
+          <Link to="/login" className="text-white font-medium hover:underline underline-offset-4 transition-colors">
+            Sign In
+          </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };

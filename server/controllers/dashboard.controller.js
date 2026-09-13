@@ -8,7 +8,7 @@ exports.getStats = async (req, res) => {
         
         const chapters = await Chapter.find({ subject: { $in: subjectIds } });
         
-        const completedChapters = chapters.filter(c => c.isCompleted).length;
+        const completedChapters = chapters.filter(c => c.completed || c.isCompleted).length;
         const totalChapters = chapters.length;
         
         const completionPercentage = totalChapters === 0 ? 0 : Math.round((completedChapters / totalChapters) * 100);

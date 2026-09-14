@@ -4,8 +4,19 @@ const connectDB = require('../server/config/db');
 
 const app = express();
 
-// Connect Database
-connectDB();
+// Database connection middleware for Serverless functions
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('Database connection failed on request:', err.message);
+    res.status(500).json({ 
+      msg: 'Database connection failed. Please ensure MONGODB_URI is configured correctly in Vercel with Network Access 0.0.0.0/0.',
+      error: err.message 
+    });
+  }
+});
 
 app.use(cors());
 app.use(express.json());

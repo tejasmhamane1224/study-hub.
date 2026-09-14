@@ -113,7 +113,8 @@ const Login = () => {
         navigate('/');
       }, 750);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Authentication failed. Please check your credentials.');
+      const serverMsg = err.response?.data?.msg || err.response?.data?.message || err.message;
+      setError(serverMsg || 'Authentication failed. Please check your credentials.');
       setLoading(false);
     }
   };

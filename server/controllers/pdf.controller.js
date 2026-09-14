@@ -4,13 +4,17 @@ const PDF = require('../models/PDF');
 const PdfChunk = require('../models/PdfChunk');
 const uploadService = require('../services/upload.service');
 const aiService = require('../services/ai.service');
-const pdfParsePackage = require('pdf-parse');
 const axios = require('axios');
-
 const fs = require('fs');
 
 async function extractPdfTextFromPath(filePath) {
     try {
+        if (typeof global.DOMMatrix === 'undefined') {
+            global.DOMMatrix = class DOMMatrix {
+                constructor() { this.a = 1; this.b = 0; this.c = 0; this.d = 1; this.e = 0; this.f = 0; }
+            };
+        }
+        const pdfParsePackage = require('pdf-parse');
         const dataBuffer = fs.readFileSync(filePath);
 
         if (pdfParsePackage.PDFParse) {

@@ -16,29 +16,27 @@ try {
   console.warn('Could not create upload directory:', e.message);
 }
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir)
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname))
-  }
-})
+// Serverless-friendly memory storage: avoids disk writing entirely on Vercel
+const storage = multer.memoryStorage();
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 4.5 * 1024 * 1024 // 4.5MB max (Vercel payload limit)
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF documents are supported'));
+    }
+  }
+});
 
 const deleteFile = async (publicId) => {
-    try {
-        if (!publicId) return;
-        const filePath = path.join(__dirname, '../../uploads', publicId);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-    } catch (err) {
-        console.error('Local file delete error:', err);
-    }
-}
+  // In-memory files do not require disk cleanup
+  return true;
+};
 
 module.exports = {
   upload,

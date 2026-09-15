@@ -79,21 +79,36 @@ const Chapter = () => {
     }
   }, [messages, asking]);
 
+  const [uploadStatus, setUploadStatus] = useState({ type: '', message: '' });
+
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) return;
 
     setUploading(true);
+    setUploadStatus({ type: '', message: '' });
     const formData = new FormData();
     formData.append('pdf', file);
 
     try {
-      await api.post(`/pdf/upload/${id}`, formData, {
+      const res = await api.post(`/pdf/upload/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      alert('PDF uploaded successfully! You can now ask questions.');
+      setUploadStatus({ 
+        type: 'success', 
+        message: res.data?.msg || 'PDF uploaded and parsed! AI Tutor is ready.' 
+      });
+      // Add a welcoming AI message acknowledging the upload
+      setMessages(prev => [
+        ...prev, 
+        { role: 'ai', content: `I have analyzed **"${file.name}"**! Ask me any questions, summaries, or test quizzes about this material.` }
+      ]);
     } catch (err) {
-      alert(err.message || 'Upload failed');
+      const serverMsg = err.response?.data?.msg || err.response?.data?.error || err.message;
+      setUploadStatus({ 
+        type: 'error', 
+        message: serverMsg || 'Upload failed. Please ensure the PDF is under 4.5MB.' 
+      });
     } finally {
       setUploading(false);
     }
@@ -181,6 +196,16 @@ const Chapter = () => {
               >
                 {uploading ? <Loader className="animate-spin" size={18} /> : <><Upload size={18} /> Upload PDF</>}
               </button>
+
+              {uploadStatus.message && (
+                <div className={`p-3 rounded-xl text-xs font-mono border ${
+                  uploadStatus.type === 'success' 
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' 
+                    : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+                }`}>
+                  {uploadStatus.message}
+                </div>
+              )}
             </form>
           </SpotlightCard>
 

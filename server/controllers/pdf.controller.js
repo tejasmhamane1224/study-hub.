@@ -7,7 +7,7 @@ const aiService = require('../services/ai.service');
 const axios = require('axios');
 const fs = require('fs');
 
-async function extractPdfTextFromPath(filePath) {
+async function extractPdfTextFromBuffer(buffer) {
     try {
         if (typeof global.DOMMatrix === 'undefined') {
             global.DOMMatrix = class DOMMatrix {
@@ -15,22 +15,24 @@ async function extractPdfTextFromPath(filePath) {
             };
         }
         const pdfParsePackage = require('pdf-parse');
-        const dataBuffer = fs.readFileSync(filePath);
+        const uint8Array = new Uint8Array(buffer);
 
         if (pdfParsePackage.PDFParse) {
-            const uint8Array = new Uint8Array(dataBuffer);
             const parser = new pdfParsePackage.PDFParse(uint8Array);
             await parser.load();
             const textResult = await parser.getText();
-            return typeof textResult === 'string' ? textResult : (textResult.text || '');
+            if (typeof textResult === 'string') return textResult;
+            if (textResult && typeof textResult.text === 'string') return textResult.text;
+            return '';
         } else if (typeof pdfParsePackage === 'function') {
-            const data = await pdfParsePackage(dataBuffer);
+            const data = await pdfParsePackage(buffer);
             return data.text || '';
         } else {
             throw new Error('Unsupported pdf-parse library format');
         }
     } catch (err) {
-        throw new Error('Failed to extract PDF text: ' + err.message);
+        console.error('PDF Text Extraction Error:', err);
+        throw new Error('Failed to extract text from PDF: ' + err.message);
     }
 }
 
@@ -41,47 +43,65 @@ exports.uploadPdf = async (req, res) => {
         if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
         
         const subject = await Subject.findById(chapter.subject);
-        if (subject.user.toString() !== req.user.id) return res.status(401).json({ msg: 'Not authorized' });
+        if (!subject || subject.user.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Not authorized' });
+        }
 
-        if (!req.file) return res.status(400).json({ msg: 'No file uploaded' });
+        if (!req.file || !req.file.buffer) {
+            return res.status(400).json({ msg: 'No file uploaded or file buffer is empty' });
+        }
 
-        const fileUrl = req.file.path; // Cloudinary URL
-        const publicId = req.file.filename;
+        const fileName = req.file.originalname || 'document.pdf';
+        const publicId = Date.now().toString() + '-' + Math.round(Math.random() * 1E6);
 
-        // Clean up old PDF
+        // Clean up any previously uploaded PDFs for this chapter
         const oldPdfs = await PDF.find({ chapter: chapter._id });
         for (const oldPdf of oldPdfs) {
             await PdfChunk.deleteMany({ pdf: oldPdf._id });
-            await uploadService.deleteFile(oldPdf.publicId); // Delete from Cloudinary
             await PDF.findByIdAndDelete(oldPdf._id);
         }
 
         const newPDF = new PDF({
-            title: req.file.originalname,
-            filename: req.file.filename,
-            filepath: fileUrl,
+            title: fileName,
+            filename: fileName,
+            filepath: 'memory://' + fileName,
             publicId: publicId,
             chapter: chapter._id,
             user: req.user.id
         });
         await newPDF.save();
 
-        // Extract text
-        const text = await extractPdfTextFromPath(fileUrl);
+        // Extract text directly from in-memory buffer
+        const text = await extractPdfTextFromBuffer(req.file.buffer);
         const chunkSize = 1500;
         const chunks = [];
-        for (let i = 0; i < text.length; i += chunkSize) {
+        
+        if (text && text.trim().length > 0) {
+            for (let i = 0; i < text.length; i += chunkSize) {
+                chunks.push({
+                    pdf: newPDF._id,
+                    chunkIndex: Math.floor(i / chunkSize),
+                    textContent: text.substring(i, i + chunkSize)
+                });
+            }
+            if (chunks.length > 0) {
+                await PdfChunk.insertMany(chunks);
+            }
+        } else {
+            // If the PDF had no text (e.g. image-only), add a friendly fallback chunk so AI Tutor still functions
             chunks.push({
                 pdf: newPDF._id,
-                chunkIndex: Math.floor(i / chunkSize),
-                textContent: text.substring(i, i + chunkSize)
+                chunkIndex: 0,
+                textContent: `[Uploaded document: ${fileName} - Note: This document appears to contain scanned pages or minimal selectable text. The AI Tutor will provide general guidance based on the chapter title: ${chapter.name || 'Chapter'}].`
             });
-        }
-        if (chunks.length > 0) {
             await PdfChunk.insertMany(chunks);
         }
 
-        res.json(newPDF);
+        res.json({
+            ...newPDF.toObject(),
+            chunksCreated: chunks.length,
+            msg: 'PDF uploaded and parsed successfully!'
+        });
     } catch (err) {
         console.error('PDF Upload Error:', err);
         res.status(500).json({ msg: err.message || 'Server Error' });

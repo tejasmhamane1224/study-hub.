@@ -150,7 +150,8 @@ const Chapter = () => {
       const res = await api.post(`/ai/chat/${id}`, { question: q });
       setMessages(prev => [...prev, { role: 'ai', content: res.data.answer || 'No answer' }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'ai', content: `Error: ${err.message}` }]);
+      const serverMsg = err.response?.data?.msg || err.response?.data?.error || err.message;
+      setMessages(prev => [...prev, { role: 'ai', content: `Error: ${serverMsg}` }]);
     } finally {
       setAsking(false);
     }

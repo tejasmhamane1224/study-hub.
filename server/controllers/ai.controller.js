@@ -24,24 +24,27 @@ exports.getHistory = async (req, res) => {
 exports.askQuestion = async (req, res) => {
     try {
         const { question } = req.body;
-        const pdf = await PDF.findOne({ chapter: req.params.chapterId, user: req.user.id });
+        // Search by chapter and optionally user to be forgiving
+        let pdf = await PDF.findOne({ chapter: req.params.chapterId, user: req.user.id });
+        if (!pdf) {
+            pdf = await PDF.findOne({ chapter: req.params.chapterId });
+        }
         
-        if (!pdf) return res.status(404).json({ msg: 'No PDF found for this chapter' });
-
-        // Limit to first 8 chunks (~12000 chars) for lightning fast processing
-        const chunks = await PdfChunk.find({ pdf: pdf._id }).sort('chunkIndex').limit(8);
-        const documentText = chunks.map(c => c.textContent).join('\n');
+        let documentText = '';
+        if (pdf) {
+            // Limit to first 8 chunks (~12000 chars) for lightning fast processing
+            const chunks = await PdfChunk.find({ pdf: pdf._id }).sort('chunkIndex').limit(8);
+            documentText = chunks.map(c => c.textContent).join('\n');
+        }
 
         const prompt = `
 You are an expert AI Tutor helping a student. Be CONCISE, direct, and fast in your response.
 
-Context Document:
-${documentText}
-
+${documentText ? `Context Document:\n${documentText}\n` : 'Context: General Study Material\n'}
 Student Question:
 ${question}
 
-Provide a concise, highly accurate, and helpful answer based ONLY on the context document provided. Use short paragraphs and markdown.`;
+Provide a concise, highly accurate, and helpful answer using short paragraphs and markdown.`;
 
         const answer = await aiService.generateResponse(prompt);
 

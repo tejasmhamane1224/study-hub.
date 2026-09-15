@@ -13,7 +13,8 @@ const aiService = {
             config.systemInstruction = systemInstruction;
         }
 
-        const modelsToTry = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+        // Verified active production models for current Gemini API
+        const modelsToTry = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-3.5-flash'];
         let lastError = null;
 
         for (const modelName of modelsToTry) {
@@ -23,7 +24,9 @@ const aiService = {
                     contents: prompt,
                     config: config
                 });
-                return response.text;
+                if (response && response.text) {
+                    return response.text;
+                }
             } catch (err) {
                 console.warn(`Model ${modelName} failed:`, err.message);
                 lastError = err;

@@ -8,32 +8,41 @@ const axios = require('axios');
 const fs = require('fs');
 
 async function extractPdfTextFromBuffer(buffer) {
+    // 1. Primary extractor: pdf-parse 1.1.1 (standard stable Node.js library)
     try {
-        if (typeof global.DOMMatrix === 'undefined') {
-            global.DOMMatrix = class DOMMatrix {
-                constructor() { this.a = 1; this.b = 0; this.c = 0; this.d = 1; this.e = 0; this.f = 0; }
-            };
+        const pdf = require('pdf-parse');
+        if (typeof pdf === 'function') {
+            const data = await pdf(buffer);
+            if (data && data.text && data.text.trim().length > 0) {
+                return data.text.trim();
+            }
         }
-        const pdfParsePackage = require('pdf-parse');
-        const uint8Array = new Uint8Array(buffer);
-
-        if (pdfParsePackage.PDFParse) {
-            const parser = new pdfParsePackage.PDFParse(uint8Array);
-            await parser.load();
-            const textResult = await parser.getText();
-            if (typeof textResult === 'string') return textResult;
-            if (textResult && typeof textResult.text === 'string') return textResult.text;
-            return '';
-        } else if (typeof pdfParsePackage === 'function') {
-            const data = await pdfParsePackage(buffer);
-            return data.text || '';
-        } else {
-            throw new Error('Unsupported pdf-parse library format');
-        }
-    } catch (err) {
-        console.error('PDF Text Extraction Error:', err);
-        throw new Error('Failed to extract text from PDF: ' + err.message);
+    } catch (parseErr) {
+        console.warn('Standard pdf-parse warning:', parseErr.message);
     }
+
+    // 2. Fallback stream parser: extract text streams from PDF buffer directly
+    try {
+        const raw = buffer.toString('latin1');
+        const textParts = [];
+        // Match literal text inside parentheses in PDF content streams (e.g. (Hello World) Tj)
+        const matches = raw.match(/\(([^()]{2,})\)/g);
+        if (matches && matches.length > 0) {
+            for (const m of matches) {
+                const cleaned = m.slice(1, -1).replace(/\\[nrtbf\\()]/g, ' ').trim();
+                if (cleaned.length > 1 && /[a-zA-Z0-9]/.test(cleaned)) {
+                    textParts.push(cleaned);
+                }
+            }
+            if (textParts.length > 0) {
+                return textParts.join(' ');
+            }
+        }
+    } catch (fallbackErr) {
+        console.warn('Fallback stream parser warning:', fallbackErr.message);
+    }
+
+    return '';
 }
 
 exports.uploadPdf = async (req, res) => {

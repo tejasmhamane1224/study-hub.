@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-export const CyberModel3D = ({ isEntering, hovered }) => {
+export const CyberModel3D = ({ isEntering, hovered, showIntro = true }) => {
   const groupRef = useRef();
   const outerRingRef = useRef();
   const middleRingRef = useRef();
@@ -37,9 +37,9 @@ export const CyberModel3D = ({ isEntering, hovered }) => {
 
     // Dynamic rotation and position based on mouse and scroll
     if (groupRef.current) {
-      // Scroll shifts model slightly upward as user reaches bottom so it hovers majestically above the auth card
-      const targetPosY = THREE.MathUtils.lerp(0, 1.8, scrollProgress);
-      const targetPosZ = THREE.MathUtils.lerp(0, -2.5, scrollProgress);
+      // In workspace, push model deeper into background so it doesn't obstruct dashboard text & Pomodoro
+      const targetPosY = !showIntro ? 0.8 : THREE.MathUtils.lerp(0, 1.8, scrollProgress);
+      const targetPosZ = !showIntro ? -5.0 : THREE.MathUtils.lerp(0, -2.5, scrollProgress);
       groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetPosY, 0.03);
       groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, targetPosZ, 0.03);
 
@@ -48,9 +48,11 @@ export const CyberModel3D = ({ isEntering, hovered }) => {
       groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetRotX, 0.03);
       groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotY, 0.03);
 
-      // Scale dynamically: normal at start, expands during mid-scroll, compacts slightly above form
+      // Scale dynamically: compact in workspace, expansive in intro
       let targetScale = 1.0;
-      if (isEntering) {
+      if (!showIntro) {
+        targetScale = 0.48;
+      } else if (isEntering) {
         targetScale = 1.4;
       } else if (scrollProgress > 0.05 && scrollProgress < 0.75) {
         targetScale = 1.25 + Math.sin(scrollProgress * Math.PI) * 0.4;

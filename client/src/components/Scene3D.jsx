@@ -99,7 +99,7 @@ const Scene3D = ({ showIntro = false, showModel = true, isEntering = false, hove
       >
         <fog attach="fog" args={['#000000', 5, 25]} />
         <CameraController showIntro={showIntro} />
-        {showModel && <CyberModel3D isEntering={isEntering} hovered={hovered} />}
+        {showModel && <CyberModel3D showIntro={showIntro} isEntering={isEntering} hovered={hovered} />}
         <ParticleGalaxy showIntro={showIntro} />
       </Canvas>
     </div>

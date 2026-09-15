@@ -37,6 +37,7 @@ module.exports = async (req, res) => {
       app.use('/api/chapters', require('../server/routes/chapters.routes'));
       app.use('/api/pdf', require('../server/routes/pdf.routes'));
       app.use('/api/ai', require('../server/routes/ai.routes'));
+      app.use('/api/quiz', require('../server/routes/ai.routes'));
       app.use('/api/dashboard', require('../server/routes/dashboard.routes'));
 
       app.use((err, request, response, next) => {

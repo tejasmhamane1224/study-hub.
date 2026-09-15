@@ -23,6 +23,7 @@ app.use('/api/subjects', require('./routes/subjects.routes'));
 app.use('/api/chapters', require('./routes/chapters.routes'));
 app.use('/api/pdf', require('./routes/pdf.routes'));
 app.use('/api/ai', require('./routes/ai.routes'));
+app.use('/api/quiz', require('./routes/ai.routes'));
 app.use('/api/dashboard', require('./routes/dashboard.routes'));
 
 // Global error handler

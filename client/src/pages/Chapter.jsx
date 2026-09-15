@@ -114,16 +114,31 @@ const Chapter = () => {
     }
   };
 
+  const handleOptionSelect = (qIndex, optIndex) => {
+    if (quizSubmitted) return;
+    setUserAnswers(prev => ({ ...prev, [qIndex]: optIndex }));
+  };
+
   const handleGenerateQuiz = async () => {
     setGeneratingQuiz(true);
     try {
       const res = await api.post(`/quiz/generate/${id}`);
-      setQuizData(res.data.quiz);
-      setUserAnswers({});
-      setQuizSubmitted(false);
-      setScore(0);
+      const rawList = res.data?.quiz || res.data?.questions || (Array.isArray(res.data) ? res.data : []);
+      if (rawList && rawList.length > 0) {
+        setQuizData(rawList);
+        setUserAnswers({});
+        setQuizSubmitted(false);
+        setScore(0);
+        // Scroll down smoothly to reveal the interactive quiz
+        setTimeout(() => {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }, 200);
+      } else {
+        alert('Could not parse quiz questions from this document. Please try again.');
+      }
     } catch (err) {
-      alert(err.message || 'Quiz generation failed');
+      const serverMsg = err.response?.data?.msg || err.response?.data?.error || err.message;
+      alert(serverMsg || 'Quiz generation failed');
     } finally {
       setGeneratingQuiz(false);
     }
@@ -133,7 +148,8 @@ const Chapter = () => {
     if (!quizData) return;
     let s = 0;
     quizData.forEach((q, i) => {
-      if (userAnswers[i] === q.correctAnswer) s++;
+      const correctIdx = q.correctIndex !== undefined ? q.correctIndex : q.correctAnswer;
+      if (userAnswers[i] === correctIdx) s++;
     });
     setScore(s);
     setQuizSubmitted(true);
@@ -322,19 +338,20 @@ const Chapter = () => {
                 <div key={qIndex} className="mb-8 last:mb-0">
                   <h4 className="text-lg font-medium text-white mb-4">{qIndex + 1}. {q.question}</h4>
                   <div className="flex flex-col gap-3">
-                    {q.options.map((opt, optIndex) => {
+                    {q.options?.map((opt, optIndex) => {
+                      const correctIdx = q.correctIndex !== undefined ? q.correctIndex : q.correctAnswer;
                       const isSelected = userAnswers[qIndex] === optIndex;
-                      const isCorrect = quizSubmitted && optIndex === q.correctIndex;
-                      const isWrong = quizSubmitted && isSelected && optIndex !== q.correctIndex;
+                      const isCorrect = quizSubmitted && optIndex === correctIdx;
+                      const isWrong = quizSubmitted && isSelected && optIndex !== correctIdx;
                       
                       let btnClass = "text-left p-4 rounded-xl border transition-all duration-200 flex items-center justify-between ";
                       if (quizSubmitted) {
-                        if (isCorrect) btnClass += "bg-white/5 border-white/10 text-white shadow-[inset_0_0_15px_rgba(20,184,166,0.1)]";
-                        else if (isWrong) btnClass += "bg-red-500/20 border-red-500/50 text-red-100";
-                        else btnClass += "bg-white/5 border-white/5 opacity-50";
+                        if (isCorrect) btnClass += "bg-emerald-500/20 border-emerald-500/40 text-emerald-200 shadow-[inset_0_0_15px_rgba(16,185,129,0.2)]";
+                        else if (isWrong) btnClass += "bg-rose-500/20 border-rose-500/50 text-rose-200";
+                        else btnClass += "bg-white/5 border-white/5 opacity-40 text-slate-400";
                       } else {
                         btnClass += isSelected 
-                          ? "bg-white/5 border-white/10 text-white shadow-[0_0_15px_rgba(6,182,212,0.15)] scale-[1.01]" 
+                          ? "bg-white text-black font-medium border-white shadow-[0_0_15px_rgba(255,255,255,0.2)] scale-[1.01]" 
                           : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20";
                       }
 

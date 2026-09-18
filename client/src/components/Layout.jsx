@@ -14,7 +14,8 @@ const TopNav = ({ toggleMobileMenu, onReplayIntro }) => {
     { path: '/', label: 'Dashboard' },
     { path: '/subjects', label: 'Subjects' },
     { path: '/ai', label: 'AI Tutor' },
-    { path: '/planner', label: 'Focus' }
+    { path: '/planner', label: 'Focus' },
+    { path: '/how-to-use', label: 'How to Use' }
   ];
 
   const handleLogout = () => {
@@ -88,7 +89,8 @@ const MobileNav = ({ isOpen, setIsOpen }) => {
     { path: '/', label: 'Dashboard' },
     { path: '/subjects', label: 'Subjects' },
     { path: '/ai', label: 'AI Tutor' },
-    { path: '/planner', label: 'Focus' }
+    { path: '/planner', label: 'Focus' },
+    { path: '/how-to-use', label: 'How to Use' }
   ];
 
   return (

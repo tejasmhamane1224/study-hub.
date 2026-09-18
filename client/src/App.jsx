@@ -10,6 +10,7 @@ import AiAssistant from './pages/AiAssistant';
 import Analytics from './pages/Analytics';
 import Planner from './pages/Planner';
 import SubjectsList from './pages/SubjectsList';
+import HowToUse from './pages/HowToUse';
 import CustomCursor from './components/CustomCursor';
 
 const ProtectedRoute = ({ children }) => {
@@ -35,6 +36,7 @@ function App() {
           <Route path="chapter/:id" element={<Chapter />} />
           <Route path="ai" element={<AiAssistant />} />
           <Route path="planner" element={<Planner />} />
+          <Route path="how-to-use" element={<HowToUse />} />
           <Route path="analytics" element={<Analytics />} />
         </Route>
       </Routes>

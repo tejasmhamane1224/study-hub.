@@ -54,7 +54,28 @@ const Planner = () => {
 
   return (
     <div>
-      <h2 className="text-3xl font-bold mb-8 flex items-center gap-3 text-white"><CalendarCheck className="text-white" /> Study Planner</h2>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Focus Architecture</span>
+          </div>
+          <h2 className="text-3xl font-bold flex items-center gap-3 text-white">
+            <CalendarCheck className="text-white" /> Focus & Study Planner
+          </h2>
+          <p className="text-sm text-slate-400 mt-1">
+            Structure your study goals into 25-minute Pomodoro sprints. Chunk complex chapters into achievable micro-tasks.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-slate-300">
+          <span className="text-emerald-400 font-bold">25m</span> Focus
+          <span className="text-slate-500">➔</span>
+          <span className="text-cyan-400 font-bold">5m</span> Break
+          <span className="text-slate-500">➔</span>
+          <span className="text-purple-400 font-bold">4x</span> Cycles
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="stealth-card p-6 border border-white/5 shadow-lg">

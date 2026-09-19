@@ -30,10 +30,10 @@ export const CyberModel3D = ({ isEntering, hovered, showIntro = true }) => {
     const time = state.clock.getElapsedTime();
     const speedMultiplier = isEntering ? 3.5 : (hovered ? 1.8 : 1.0);
 
-    // Calculate scroll progress (0 to 1) safely
-    const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-    const scrollMax = Math.max(1, docHeight - window.innerHeight);
-    const scrollProgress = Math.min(1, Math.max(0, window.scrollY / scrollMax));
+    // Fast scroll calculation without double layout query
+    const scrollProgress = showIntro 
+      ? Math.min(1, Math.max(0, window.scrollY / Math.max(1, window.innerHeight * 2)))
+      : 0;
 
     // Dynamic rotation and position based on mouse and scroll
     if (groupRef.current) {

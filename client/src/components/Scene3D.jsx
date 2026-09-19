@@ -3,10 +3,32 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import CyberModel3D from './CyberModel3D';
 
+// Efficient event-driven scroll tracking without layout thrashing
+let cachedScrollProgress = 0;
+if (typeof window !== 'undefined') {
+  let ticking = false;
+  const updateScroll = () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+        const scrollMax = Math.max(1, docHeight - window.innerHeight);
+        cachedScrollProgress = Math.min(1, Math.max(0, window.scrollY / scrollMax));
+        ticking = false;
+      });
+      ticking = true;
+    }
+  };
+  window.addEventListener('scroll', updateScroll, { passive: true });
+  window.addEventListener('resize', updateScroll, { passive: true });
+  updateScroll();
+}
+
+export const getScrollProgress = () => cachedScrollProgress;
+
 // Hyper-optimized, elegant particle galaxy
 const ParticleGalaxy = ({ showIntro }) => {
   const pointsRef = useRef();
-  const count = 4000;
+  const count = 3500;
   
   const [positions, sizes] = useMemo(() => {
     const positions = new Float32Array(count * 3);
@@ -29,10 +51,7 @@ const ParticleGalaxy = ({ showIntro }) => {
   useFrame((state) => {
     if (!pointsRef.current) return;
     const time = state.clock.getElapsedTime();
-    
-    const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-    const scrollMax = Math.max(1, docHeight - window.innerHeight);
-    const progress = Math.min(1, Math.max(0, window.scrollY / scrollMax));
+    const progress = getScrollProgress();
     
     const targetX = ((state.pointer.y * Math.PI) * 0.04) + (progress * Math.PI * 0.4);
     const targetY = (time * 0.03) + ((state.pointer.x * Math.PI) * 0.04) + (progress * Math.PI * 1.5);
@@ -61,7 +80,7 @@ const ParticleGalaxy = ({ showIntro }) => {
         size={0.045}
         color="#ffffff"
         transparent
-        opacity={0.3}
+        opacity={0.28}
         sizeAttenuation={true}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
@@ -73,9 +92,7 @@ const ParticleGalaxy = ({ showIntro }) => {
 // Camera Controller for cinematic scroll tracking
 const CameraController = ({ showIntro }) => {
   useFrame((state) => {
-    const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-    const scrollMax = Math.max(1, docHeight - window.innerHeight);
-    const progress = Math.min(1, Math.max(0, window.scrollY / scrollMax));
+    const progress = getScrollProgress();
 
     const targetZ = showIntro ? 7.5 : THREE.MathUtils.lerp(7.5, 6.2, progress);
     const targetY = showIntro ? 0 : THREE.MathUtils.lerp(0, -0.4, progress);

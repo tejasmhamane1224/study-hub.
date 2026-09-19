@@ -1,43 +1,66 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, useSpring } from 'framer-motion';
 
 const CustomCursor = () => {
   const cursorRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
   
-  const springConfig = { damping: 25, stiffness: 300, mass: 0.5 };
+  const springConfig = { damping: 28, stiffness: 350, mass: 0.4 };
   const cursorX = useSpring(-100, springConfig);
   const cursorY = useSpring(-100, springConfig);
 
   useEffect(() => {
-    const moveCursor = (e) => {
+    // Disable entirely on touch / coarse pointer devices
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      return;
+    }
+
+    const handleMouseMove = (e) => {
+      if (!isVisible) setIsVisible(true);
       cursorX.set(e.clientX - 16);
       cursorY.set(e.clientY - 16);
       
-      // Also update the immediate dot without spring
       if (cursorRef.current) {
         cursorRef.current.style.transform = `translate3d(${e.clientX - 4}px, ${e.clientY - 4}px, 0)`;
       }
     };
 
-    window.addEventListener('mousemove', moveCursor);
-    return () => {
-      window.removeEventListener('mousemove', moveCursor);
+    const handleMouseLeave = () => {
+      setIsVisible(false);
     };
-  }, [cursorX, cursorY]);
+
+    const handleMouseEnter = () => {
+      setIsVisible(true);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseenter', handleMouseEnter);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mouseenter', handleMouseEnter);
+    };
+  }, [cursorX, cursorY, isVisible]);
 
   return (
-    <>
-      {/* Outer Springy Ring (Hidden on touch/mobile devices) */}
+    <div 
+      className={`hidden md:block pointer-events-none transition-opacity duration-200 z-[9999] ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
+      {/* Outer Springy Ring */}
       <motion.div
-        className="hidden md:block fixed top-0 left-0 w-8 h-8 rounded-full border border-white/50 mix-blend-difference pointer-events-none z-[9999]"
+        className="fixed top-0 left-0 w-8 h-8 rounded-full border border-white/60 pointer-events-none will-change-transform"
         style={{ x: cursorX, y: cursorY }}
       />
-      {/* Inner Immediate Dot (Hidden on touch/mobile devices) */}
+      {/* Inner Immediate Dot */}
       <div 
         ref={cursorRef}
-        className="hidden md:block fixed top-0 left-0 w-2 h-2 bg-white rounded-full mix-blend-difference pointer-events-none z-[9999] transition-transform duration-0"
+        className="fixed top-0 left-0 w-2 h-2 bg-white rounded-full pointer-events-none will-change-transform"
       />
-    </>
+    </div>
   );
 };
 

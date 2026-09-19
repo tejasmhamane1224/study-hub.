@@ -5,21 +5,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { renderFormattedContent } from '../utils/mathRenderer';
 
-// Spotlight Effect Component with HUD
+// Spotlight Effect Component with HUD & CSS Custom Properties (Zero Re-renders)
 const SpotlightCard = ({ children, className = "" }) => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [opacity, setOpacity] = useState(0);
+  const cardRef = useRef(null);
 
   const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    cardRef.current.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+    cardRef.current.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
   };
 
   return (
     <div 
+      ref={cardRef}
       onMouseMove={handleMouseMove}
-      onMouseEnter={() => setOpacity(1)}
-      onMouseLeave={() => setOpacity(0)}
       className={`relative overflow-hidden group ${className}`}
     >
       {/* HUD Crosshairs */}
@@ -29,10 +29,9 @@ const SpotlightCard = ({ children, className = "" }) => {
       <div className="absolute bottom-2 right-2 text-[10px] text-white/20 font-mono pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity z-40">+</div>
       
       <div
-        className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 z-30"
+        className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30"
         style={{
-          opacity,
-          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(255,255,255,0.06), transparent 40%)`,
+          background: `radial-gradient(600px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(255,255,255,0.06), transparent 40%)`,
         }}
       />
       {children}

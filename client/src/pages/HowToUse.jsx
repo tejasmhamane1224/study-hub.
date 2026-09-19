@@ -17,7 +17,7 @@ const AestheticVideoPlayer = ({ section, isPlaying, onTogglePlay, speed, onSpeed
 
   const duration = section.duration || 20;
 
-  // Video progress timer
+  // Video progress timer: smooth 100ms ticks
   useEffect(() => {
     let timer = null;
     if (isPlaying) {
@@ -26,9 +26,9 @@ const AestheticVideoPlayer = ({ section, isPlaying, onTogglePlay, speed, onSpeed
           if (prev >= duration) {
             return 0; // loop
           }
-          return prev + 1;
+          return parseFloat((prev + 0.1).toFixed(1));
         });
-      }, 1000 / speed);
+      }, 100 / speed);
     }
     return () => clearInterval(timer);
   }, [isPlaying, duration, speed]);
@@ -258,6 +258,7 @@ const AestheticVideoPlayer = ({ section, isPlaying, onTogglePlay, speed, onSpeed
             type="range" 
             min="0" 
             max={duration} 
+            step="0.1"
             value={currentTime} 
             onChange={handleSeek}
             className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-white hover:accent-emerald-400"

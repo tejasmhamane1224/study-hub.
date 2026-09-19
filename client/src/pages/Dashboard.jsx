@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Plus, Loader, Book, Send, Target, 
@@ -7,21 +7,21 @@ import {
 import { motion } from 'framer-motion';
 import api from '../services/api';
 
-// Defined OUTSIDE Dashboard component so inputs never unmount or lose focus on keystroke!
+// Defined OUTSIDE Dashboard component with CSS Custom Properties for ZERO re-renders on mousemove
 const SpotlightCard = ({ children, className = "" }) => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [opacity, setOpacity] = useState(0);
+  const cardRef = useRef(null);
 
   const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    cardRef.current.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+    cardRef.current.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
   };
 
   return (
     <div 
+      ref={cardRef}
       onMouseMove={handleMouseMove}
-      onMouseEnter={() => setOpacity(1)}
-      onMouseLeave={() => setOpacity(0)}
       className={`relative overflow-hidden group ${className}`}
     >
       {/* HUD Crosshairs */}
@@ -36,10 +36,9 @@ const SpotlightCard = ({ children, className = "" }) => {
       </div>
 
       <div
-        className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 z-30"
+        className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30"
         style={{
-          opacity,
-          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(255,255,255,0.06), transparent 40%)`,
+          background: `radial-gradient(600px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(255,255,255,0.06), transparent 40%)`,
         }}
       />
       {children}

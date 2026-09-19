@@ -24,7 +24,7 @@ const TopNav = ({ toggleMobileMenu, onReplayIntro }) => {
   };
 
   return (
-    <header className="h-[64px] border-b border-white/[0.04] flex items-center justify-between px-6 md:px-10 sticky top-0 z-40 bg-transparent mix-blend-difference">
+    <header className="h-[64px] border-b border-white/[0.08] bg-black/75 backdrop-blur-xl flex items-center justify-between px-6 md:px-10 sticky top-0 z-40 transition-colors">
       <div className="flex items-center gap-12">
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-white tracking-tighter">STUDY HUB</span>
@@ -135,8 +135,14 @@ const Layout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // Default to true so user gets the Stepwise flow: 1. 3D Intro -> 2. Workspace
-  const [showIntro, setShowIntro] = useState(true);
+  // Remember if intro was seen in this session so user isn't interrupted on page reloads
+  const [showIntro, setShowIntro] = useState(() => {
+    try {
+      return !sessionStorage.getItem('study_hub_intro_seen');
+    } catch {
+      return false;
+    }
+  });
   const [isEntering, setIsEntering] = useState(false);
 
   useEffect(() => {
@@ -161,6 +167,11 @@ const Layout = () => {
   const handleStart = () => {
     setShowIntro(false);
     setIsEntering(false);
+    try {
+      sessionStorage.setItem('study_hub_intro_seen', 'true');
+    } catch {
+      // Storage error handling
+    }
   };
 
   useEffect(() => {
@@ -178,14 +189,16 @@ const Layout = () => {
       infinite: false,
     });
 
+    let rafId;
     function raf(time) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
+      cancelAnimationFrame(rafId);
       lenis.destroy();
     };
   }, [showIntro]);

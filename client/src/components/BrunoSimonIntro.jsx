@@ -32,6 +32,16 @@ const BrunoSimonIntro = ({ onStart, onEngage }) => {
     }, 800);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.code === 'Space' || e.code === 'Enter') && isReady) {
+        handleStart();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isReady]);
+
   return (
     <div className="fixed inset-0 z-[999] overflow-hidden pointer-events-auto flex items-center justify-center">
       {/* Top and Bottom Curtains for the Bruno Simon Theatrical Split */}

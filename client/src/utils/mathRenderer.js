@@ -2,47 +2,81 @@ import katex from 'katex';
 import { marked } from 'marked';
 
 export function renderFormattedContent(content) {
-  if (!content) return '';
+  if (!content || typeof content !== 'string') return '';
 
   try {
-    // 1. Replace display block math $$...$$ or \[...\]
-    let processed = content.replace(/\$\$([\s\S]+?)\$\$/g, (match, math) => {
+    const placeholders = {};
+    let placeholderIndex = 0;
+
+    const createPlaceholder = (replacement) => {
+      const key = `@@STUDY_HUB_TOKEN_${placeholderIndex++}@@`;
+      placeholders[key] = replacement;
+      return key;
+    };
+
+    // 1. Protect fenced code blocks ```...```
+    let text = content.replace(/(```[\s\S]*?```)/g, (match) => {
+      return createPlaceholder(match);
+    });
+
+    // 2. Protect inline code `...`
+    text = text.replace(/(`[^`\n]+?`)/g, (match) => {
+      return createPlaceholder(match);
+    });
+
+    // 3. Extract & Render Display Math: $$...$$ and \[...\]
+    text = text.replace(/\$\$([\s\S]+?)\$\$/g, (match, math) => {
       try {
-        return katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
+        const rendered = katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
+        return createPlaceholder(`<div class="katex-display-wrapper my-3 overflow-x-auto custom-scrollbar">${rendered}</div>`);
       } catch {
         return match;
       }
     });
 
-    processed = processed.replace(/\\\[([\s\S]+?)\\\]/g, (match, math) => {
+    text = text.replace(/\\\[([\s\S]+?)\\\]/g, (match, math) => {
       try {
-        return katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
+        const rendered = katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
+        return createPlaceholder(`<div class="katex-display-wrapper my-3 overflow-x-auto custom-scrollbar">${rendered}</div>`);
       } catch {
         return match;
       }
     });
 
-    // 2. Replace inline math $...$ or \(...\)
-    processed = processed.replace(/\$([^$\n]+?)\$/g, (match, math) => {
+    // 4. Extract & Render Inline Math: $...$ and \(...\)
+    text = text.replace(/\$([^$\n]+?)\$/g, (match, math) => {
       try {
-        return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
+        const rendered = katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
+        return createPlaceholder(rendered);
       } catch {
         return match;
       }
     });
 
-    processed = processed.replace(/\\\(([\s\S]+?)\\\)/g, (match, math) => {
+    text = text.replace(/\\\(([\s\S]+?)\\\)/g, (match, math) => {
       try {
-        return katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
+        const rendered = katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
+        return createPlaceholder(rendered);
       } catch {
         return match;
       }
     });
 
-    // 3. Render markdown
-    return marked.parse(processed);
+    // 5. Render markdown on clean text
+    let html = marked.parse(text);
+
+    // 6. Restore placeholders
+    for (const [token, value] of Object.entries(placeholders)) {
+      html = html.split(token).join(value);
+    }
+
+    return html;
   } catch (err) {
     console.error("Math rendering error:", err);
-    return marked.parse(content);
+    try {
+      return marked.parse(content);
+    } catch {
+      return content;
+    }
   }
 }

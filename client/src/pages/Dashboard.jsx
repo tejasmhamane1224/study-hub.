@@ -85,7 +85,8 @@ const Dashboard = () => {
       setChapterCount('');
       loadDashboardData();
     } catch (err) {
-      alert(err.message || 'Error creating subject');
+      const msg = err.response?.data?.msg || err.response?.data?.message || err.message;
+      alert(msg || 'Error creating subject');
     } finally {
       setIsCreating(false);
     }

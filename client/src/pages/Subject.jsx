@@ -36,7 +36,8 @@ const Subject = () => {
       await api.put(`/chapters/${chapterId}`, { completed: isCompleted });
       loadSubjectData();
     } catch (err) {
-      alert(err.message || 'Error updating chapter');
+      const msg = err.response?.data?.msg || err.response?.data?.message || err.message;
+      alert(msg || 'Error updating chapter');
     }
   };
 
@@ -46,7 +47,8 @@ const Subject = () => {
         await api.delete(`/subjects/${id}`);
         navigate('/');
       } catch (err) {
-        alert(err.message || 'Error deleting subject');
+        const msg = err.response?.data?.msg || err.response?.data?.message || err.message;
+        alert(msg || 'Error deleting subject');
       }
     }
   };

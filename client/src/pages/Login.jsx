@@ -66,13 +66,15 @@ const Login = () => {
       touchMultiplier: 2,
     });
 
+    let rafId;
     function raf(time) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
+      cancelAnimationFrame(rafId);
       lenis.destroy();
       document.body.style.overflow = 'auto';
     };
@@ -157,12 +159,22 @@ const Login = () => {
             <p className="text-slate-400 font-mono text-xs sm:text-sm tracking-widest uppercase leading-relaxed max-w-lg">
               Spatial cognitive environment designed for hyper-focus and distraction-free deep study.
             </p>
+            <div className="mt-8 flex items-center gap-4 pointer-events-auto">
+              <button
+                type="button"
+                onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-mono tracking-widest uppercase text-white transition-all cursor-pointer shadow-lg"
+              >
+                Skip to Sign In ➔
+              </button>
+            </div>
+
             <motion.div 
               animate={{ y: [0, 8, 0] }} 
               transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-              className="mt-12 text-white/60 flex flex-col items-center gap-2"
+              className="mt-8 text-white/60 flex flex-col items-center gap-2"
             >
-              <span className="text-[10px] tracking-[0.3em] font-mono uppercase">SCROLL TO DIVE</span>
+              <span className="text-[10px] tracking-[0.3em] font-mono uppercase">OR SCROLL TO EXPLORE</span>
               <ChevronDown size={20} />
             </motion.div>
           </motion.div>

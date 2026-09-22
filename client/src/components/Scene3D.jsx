@@ -3,29 +3,31 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import CyberModel3D from './CyberModel3D';
 import { getScrollProgress } from '../utils/scrollTracker';
+import { getGlowParticleTexture } from '../utils/particleTexture';
 
 // Re-export for any external consumers
 export { getScrollProgress };
 
-// Hyper-optimized, elegant particle galaxy backdrop
+// Photorealistic celestial starfield (anti-aliased round glowing stars, no square pixels)
 const ParticleGalaxy = ({ showIntro, variant = 'hero' }) => {
   const pointsRef = useRef();
-  const count = 3500;
+  const count = 3000;
+  const particleTexture = useMemo(() => getGlowParticleTexture(), []);
   
   const [positions, sizes] = useMemo(() => {
     const positions = new Float32Array(count * 3);
     const sizes = new Float32Array(count);
     
     for (let i = 0; i < count; i++) {
-      const radius = Math.random() * 22;
+      const radius = 2.5 + Math.random() * 20;
       const theta = Math.random() * 2 * Math.PI;
-      const y = (Math.random() - 0.5) * 3.5 * (1 / (radius + 0.1));
+      const y = (Math.random() - 0.5) * 4.0 * (1 / (radius * 0.1 + 0.1));
       
       positions[i * 3] = Math.cos(theta) * radius;
       positions[i * 3 + 1] = y;
       positions[i * 3 + 2] = Math.sin(theta) * radius;
       
-      sizes[i] = Math.random() * 1.5;
+      sizes[i] = 0.5 + Math.random() * 1.2;
     }
     return [positions, sizes];
   }, [count]);
@@ -35,8 +37,8 @@ const ParticleGalaxy = ({ showIntro, variant = 'hero' }) => {
     const time = state.clock.getElapsedTime();
     const progress = getScrollProgress();
     
-    const targetX = ((state.pointer.y * Math.PI) * 0.04) + (progress * Math.PI * 0.4);
-    const targetY = (time * 0.03) + ((state.pointer.x * Math.PI) * 0.04) + (progress * Math.PI * 1.5);
+    const targetX = ((state.pointer.y * Math.PI) * 0.03) + (progress * Math.PI * 0.3);
+    const targetY = (time * 0.02) + ((state.pointer.x * Math.PI) * 0.03) + (progress * Math.PI * 1.2);
     
     pointsRef.current.rotation.x = THREE.MathUtils.lerp(pointsRef.current.rotation.x, targetX, 0.03);
     pointsRef.current.rotation.y = THREE.MathUtils.lerp(pointsRef.current.rotation.y, targetY, 0.03);
@@ -59,13 +61,14 @@ const ParticleGalaxy = ({ showIntro, variant = 'hero' }) => {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.045}
-        color="#ffffff"
-        transparent
-        opacity={0.25}
+        size={0.026}
+        color="#f1f5f9"
+        transparent={true}
+        opacity={0.22}
         sizeAttenuation={true}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
+        map={particleTexture}
       />
     </points>
   );
@@ -111,7 +114,7 @@ const Scene3D = ({
         dpr={[1, 1.5]} 
         performance={{ min: 0.5 }}
       >
-        <fog attach="fog" args={['#000000', 5, 25]} />
+        <fog attach="fog" args={['#000000', 6, 24]} />
         <CameraController showIntro={showIntro} variant={variant} />
         {showModel && (
           <CyberModel3D 

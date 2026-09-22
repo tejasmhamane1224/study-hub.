@@ -8,7 +8,10 @@ const aiService = {
         }
 
         const ai = new GoogleGenAI({ apiKey });
-        const config = {};
+        const config = {
+            maxOutputTokens: 8192, // Maximum output token limit for comprehensive in-depth responses
+            temperature: 0.7
+        };
         if (systemInstruction) {
             config.systemInstruction = systemInstruction;
         }

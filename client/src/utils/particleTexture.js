@@ -3,8 +3,8 @@ import * as THREE from 'three';
 let cachedTexture = null;
 
 /**
- * Generates a smooth, high-resolution radial gradient texture for WebGL particles.
- * Eliminates square OpenGL pixel artifacts and creates cinematic, glowing round starlight photons.
+ * Generates a brilliant, high-luminance radial gradient texture for WebGL particles.
+ * Produces crisp, glowing round starlight photons with radiant cores.
  */
 export const getGlowParticleTexture = () => {
   if (cachedTexture) return cachedTexture;
@@ -17,9 +17,9 @@ export const getGlowParticleTexture = () => {
 
   const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
   gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-  gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.85)');
-  gradient.addColorStop(0.45, 'rgba(225, 240, 255, 0.4)');
-  gradient.addColorStop(0.75, 'rgba(180, 215, 255, 0.1)');
+  gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.95)');
+  gradient.addColorStop(0.5, 'rgba(220, 245, 255, 0.65)');
+  gradient.addColorStop(0.8, 'rgba(180, 220, 255, 0.25)');
   gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
   ctx.fillStyle = gradient;

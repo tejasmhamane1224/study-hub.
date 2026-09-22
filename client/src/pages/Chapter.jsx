@@ -185,8 +185,13 @@ const Chapter = () => {
       const res = await api.post(`/ai/chat/${id}`, { question: q });
       setMessages(prev => [...prev, { role: 'ai', content: res.data.answer || 'No answer' }]);
     } catch (err) {
-      const serverMsg = err.response?.data?.msg || err.response?.data?.error || err.message;
-      setMessages(prev => [...prev, { role: 'ai', content: `Error: ${serverMsg}` }]);
+      let serverMsg = err.response?.data?.msg || err.response?.data?.error || err.message;
+      try {
+        if (typeof serverMsg === 'string' && (serverMsg.includes('503') || serverMsg.includes('UNAVAILABLE') || serverMsg.includes('high demand'))) {
+          serverMsg = 'The AI model is temporarily experiencing high server traffic. Please try again in a few moments.';
+        }
+      } catch (_) {}
+      setMessages(prev => [...prev, { role: 'ai', content: `Notice: ${serverMsg}` }]);
     } finally {
       setAsking(false);
     }

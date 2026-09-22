@@ -73,9 +73,14 @@ const AiAssistant = () => {
       const res = await api.post(`/ai/chat`, { question: queryText });
       setMessages(prev => [...prev, { role: 'ai', content: res.data.answer || 'No answer generated.' }]);
     } catch (err) {
-      const errMsg = err.response?.data?.msg || err.message;
-      setMessages(prev => [...prev, { role: 'ai', content: `Communication Error: ${errMsg}` }]);
-      toast.error('Failed to establish neural link with AI Tutor.', 'Telemetry Alert');
+      let errMsg = err.response?.data?.msg || err.message;
+      try {
+        if (typeof errMsg === 'string' && (errMsg.includes('503') || errMsg.includes('UNAVAILABLE') || errMsg.includes('high demand'))) {
+          errMsg = 'The AI model is temporarily experiencing high server traffic. Please try again in a few moments.';
+        }
+      } catch (_) {}
+      setMessages(prev => [...prev, { role: 'ai', content: `Notice: ${errMsg}` }]);
+      toast.error('AI Tutor response delayed. Please try again.', 'Telemetry Alert');
     } finally {
       setAsking(false);
     }
@@ -136,10 +141,10 @@ const AiAssistant = () => {
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold tracking-tight text-white">AI Cognitive Tutor</h2>
               <span className="text-[10px] font-mono px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded border border-cyan-500/20 uppercase tracking-widest">
-                Gemini 2.5
+                Gemini 3.5 Flash
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono">Quantum context memory // 8192 token synthesis</p>
+            <p className="text-xs text-slate-400 font-mono">Quantum context memory // High-Speed Neural Engine</p>
           </div>
         </div>
 

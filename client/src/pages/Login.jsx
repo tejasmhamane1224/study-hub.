@@ -124,7 +124,7 @@ const Login = () => {
   return (
     <div className="relative w-full min-h-[420vh] bg-transparent text-slate-100 selection:bg-white/20">
       {/* 3D WebGL Canvas (Continuous Centerpiece Model + Particles) */}
-      <Scene3D showIntro={showIntro} isEntering={isEntering} />
+      <Scene3D showIntro={showIntro} isEntering={isEntering} variant="hero" />
 
       {/* Grid Lines Overlay */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none z-10" />

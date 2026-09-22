@@ -2,31 +2,13 @@ import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import CyberModel3D from './CyberModel3D';
+import { getScrollProgress } from '../utils/scrollTracker';
 
-// Efficient event-driven scroll tracking without layout thrashing
-let cachedScrollProgress = 0;
-if (typeof window !== 'undefined') {
-  let ticking = false;
-  const updateScroll = () => {
-    if (!ticking) {
-      window.requestAnimationFrame(() => {
-        const docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-        const scrollMax = Math.max(1, docHeight - window.innerHeight);
-        cachedScrollProgress = Math.min(1, Math.max(0, window.scrollY / scrollMax));
-        ticking = false;
-      });
-      ticking = true;
-    }
-  };
-  window.addEventListener('scroll', updateScroll, { passive: true });
-  window.addEventListener('resize', updateScroll, { passive: true });
-  updateScroll();
-}
+// Re-export for any external consumers
+export { getScrollProgress };
 
-export const getScrollProgress = () => cachedScrollProgress;
-
-// Hyper-optimized, elegant particle galaxy
-const ParticleGalaxy = ({ showIntro }) => {
+// Hyper-optimized, elegant particle galaxy backdrop
+const ParticleGalaxy = ({ showIntro, variant = 'hero' }) => {
   const pointsRef = useRef();
   const count = 3500;
   
@@ -37,7 +19,7 @@ const ParticleGalaxy = ({ showIntro }) => {
     for (let i = 0; i < count; i++) {
       const radius = Math.random() * 22;
       const theta = Math.random() * 2 * Math.PI;
-      const y = (Math.random() - 0.5) * 3 * (1 / (radius + 0.1));
+      const y = (Math.random() - 0.5) * 3.5 * (1 / (radius + 0.1));
       
       positions[i * 3] = Math.cos(theta) * radius;
       positions[i * 3 + 1] = y;
@@ -80,7 +62,7 @@ const ParticleGalaxy = ({ showIntro }) => {
         size={0.045}
         color="#ffffff"
         transparent
-        opacity={0.28}
+        opacity={0.25}
         sizeAttenuation={true}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
@@ -90,23 +72,38 @@ const ParticleGalaxy = ({ showIntro }) => {
 };
 
 // Camera Controller for cinematic scroll tracking
-const CameraController = ({ showIntro }) => {
+const CameraController = ({ showIntro, variant = 'hero' }) => {
   useFrame((state) => {
     const progress = getScrollProgress();
+    const isHero = variant === 'hero';
 
-    const targetZ = showIntro ? 7.5 : THREE.MathUtils.lerp(7.5, 6.2, progress);
-    const targetY = showIntro ? 0 : THREE.MathUtils.lerp(0, -0.4, progress);
-    
-    state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ, 0.04);
-    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.04);
-    
-    const targetRotationZ = showIntro ? 0 : THREE.MathUtils.lerp(0, Math.PI / 16, progress);
-    state.camera.rotation.z = THREE.MathUtils.lerp(state.camera.rotation.z, targetRotationZ, 0.04);
+    if (isHero) {
+      // Keep camera stable at z=7.5 with subtle fluid tilt for cinematic depth
+      const targetZ = 7.5;
+      const targetY = THREE.MathUtils.lerp(0, -0.2, progress);
+      const targetRotationZ = THREE.MathUtils.lerp(0, Math.PI / 32, progress);
+
+      state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ, 0.04);
+      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.04);
+      state.camera.rotation.z = THREE.MathUtils.lerp(state.camera.rotation.z, targetRotationZ, 0.04);
+    } else {
+      // Workspace ambient camera
+      const targetZ = 7.2;
+      const targetY = 0;
+      state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ, 0.04);
+      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.04);
+    }
   });
   return null;
 };
 
-const Scene3D = ({ showIntro = false, showModel = true, isEntering = false, hovered = false }) => {
+const Scene3D = ({ 
+  showIntro = false, 
+  showModel = true, 
+  isEntering = false, 
+  hovered = false,
+  variant = 'hero'
+}) => {
   return (
     <div className="fixed inset-0 w-full h-full z-0 pointer-events-none bg-[#000000]">
       <Canvas 
@@ -115,9 +112,16 @@ const Scene3D = ({ showIntro = false, showModel = true, isEntering = false, hove
         performance={{ min: 0.5 }}
       >
         <fog attach="fog" args={['#000000', 5, 25]} />
-        <CameraController showIntro={showIntro} />
-        {showModel && <CyberModel3D showIntro={showIntro} isEntering={isEntering} hovered={hovered} />}
-        <ParticleGalaxy showIntro={showIntro} />
+        <CameraController showIntro={showIntro} variant={variant} />
+        {showModel && (
+          <CyberModel3D 
+            showIntro={showIntro} 
+            isEntering={isEntering} 
+            hovered={hovered} 
+            variant={variant}
+          />
+        )}
+        <ParticleGalaxy showIntro={showIntro} variant={variant} />
       </Canvas>
     </div>
   );

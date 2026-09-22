@@ -211,7 +211,7 @@ const Layout = () => {
         )}
       </AnimatePresence>
 
-      <Scene3D showIntro={showIntro} isEntering={isEntering} />
+      <Scene3D showIntro={showIntro} isEntering={isEntering} variant="workspace" />
       
       <motion.div 
         initial={{ opacity: 0, y: 20 }}

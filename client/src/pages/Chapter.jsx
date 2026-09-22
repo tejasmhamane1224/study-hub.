@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FileText, Upload, Zap, ClipboardList, Bot, Send, ArrowLeft, Loader, X } from 'lucide-react';
+import { FileText, Upload, Zap, ClipboardList, Bot, Send, ArrowLeft, Loader, X, Copy, Check, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { renderFormattedContent } from '../utils/mathRenderer';
+import { useToast } from '../context/ToastContext';
 
 // Spotlight Effect Component with HUD & CSS Custom Properties (Zero Re-renders)
 const SpotlightCard = ({ children, className = "" }) => {
@@ -42,6 +43,7 @@ const SpotlightCard = ({ children, className = "" }) => {
 const Chapter = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
@@ -55,7 +57,19 @@ const Chapter = () => {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [asking, setAsking] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null);
   const chatRef = useRef(null);
+
+  const handleCopy = (content, index) => {
+    try {
+      navigator.clipboard.writeText(content);
+      setCopiedIndex(index);
+      toast.success('Cognitive response copied to clipboard.', 'Copied');
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch {
+      toast.error('Unable to access clipboard.');
+    }
+  };
 
   const loadHistory = async () => {
     try {
@@ -93,10 +107,12 @@ const Chapter = () => {
       const res = await api.post(`/pdf/upload/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      const successMsg = res.data?.msg || 'PDF uploaded and parsed! AI Tutor is ready.';
       setUploadStatus({ 
         type: 'success', 
-        message: res.data?.msg || 'PDF uploaded and parsed! AI Tutor is ready.' 
+        message: successMsg 
       });
+      toast.success(successMsg, 'Document Ingested');
       // Add a welcoming AI message acknowledging the upload
       setMessages(prev => [
         ...prev, 
@@ -104,10 +120,12 @@ const Chapter = () => {
       ]);
     } catch (err) {
       const serverMsg = err.response?.data?.msg || err.response?.data?.error || err.message;
+      const failMsg = serverMsg || 'Upload failed. Please ensure the PDF is under 4.5MB.';
       setUploadStatus({ 
         type: 'error', 
-        message: serverMsg || 'Upload failed. Please ensure the PDF is under 4.5MB.' 
+        message: failMsg 
       });
+      toast.error(failMsg, 'Upload Alert');
     } finally {
       setUploading(false);
     }
@@ -128,16 +146,17 @@ const Chapter = () => {
         setUserAnswers({});
         setQuizSubmitted(false);
         setScore(0);
+        toast.success(`Synthesized ${rawList.length} practice questions from document!`, 'Quiz Synthesized');
         // Scroll down smoothly to reveal the interactive quiz
         setTimeout(() => {
           window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }, 200);
       } else {
-        alert('Could not parse quiz questions from this document. Please try again.');
+        toast.error('Could not parse quiz questions from this document. Please try again.', 'Quiz Generation');
       }
     } catch (err) {
       const serverMsg = err.response?.data?.msg || err.response?.data?.error || err.message;
-      alert(serverMsg || 'Quiz generation failed');
+      toast.error(serverMsg || 'Quiz generation failed', 'Error');
     } finally {
       setGeneratingQuiz(false);
     }
@@ -152,6 +171,7 @@ const Chapter = () => {
     });
     setScore(s);
     setQuizSubmitted(true);
+    toast.success(`Assessment finished! You scored ${s} of ${quizData.length} (${Math.round((s / quizData.length) * 100)}%).`, 'Results Logged');
   };
 
   const askQuestion = async (q) => {
@@ -263,12 +283,38 @@ const Chapter = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     key={i} 
-                    className={`max-w-[85%] p-5 rounded-2xl text-sm md:text-base leading-relaxed ${
+                    className={`max-w-[85%] p-5 rounded-2xl text-sm md:text-base leading-relaxed relative group ${
                       msg.role === 'user' 
                         ? 'bg-white text-black self-end rounded-br-sm font-medium' 
                         : 'bg-[#111] text-slate-300 border border-white/10 self-start rounded-bl-sm'
                     }`}
                   >
+                    {msg.role === 'ai' && (
+                      <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-white/5 text-[11px] text-slate-400 font-mono">
+                        <span className="flex items-center gap-1 text-cyan-400">
+                          <Sparkles size={11} />
+                          <span>AI TUTOR</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(msg.content, i)}
+                          className="opacity-50 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 cursor-pointer"
+                          title="Copy response"
+                        >
+                          {copiedIndex === i ? (
+                            <>
+                              <Check size={11} className="text-emerald-400" />
+                              <span className="text-emerald-400">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={11} />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                     <div 
                       className={`prose prose-sm max-w-none prose-p:leading-relaxed ${msg.role === 'user' ? 'prose-p:text-black' : 'prose-invert prose-pre:bg-black/40 prose-pre:border prose-pre:border-white/10'}`} 
                       dangerouslySetInnerHTML={{ __html: msg.role === 'ai' ? renderFormattedContent(msg.content) : msg.content }} 

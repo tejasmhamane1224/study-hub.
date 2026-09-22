@@ -13,6 +13,8 @@ import SubjectsList from './pages/SubjectsList';
 import HowToUse from './pages/HowToUse';
 import CustomCursor from './components/CustomCursor';
 
+import { ToastProvider } from './context/ToastContext';
+
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -23,24 +25,26 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <CustomCursor />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route index element={<Dashboard />} />
-          <Route path="subjects" element={<SubjectsList />} />
-          <Route path="subject/:id" element={<Subject />} />
-          <Route path="chapter/:id" element={<Chapter />} />
-          <Route path="ai" element={<AiAssistant />} />
-          <Route path="planner" element={<Planner />} />
-          <Route path="how-to-use" element={<HowToUse />} />
-          <Route path="analytics" element={<Analytics />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <CustomCursor />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route index element={<Dashboard />} />
+            <Route path="subjects" element={<SubjectsList />} />
+            <Route path="subject/:id" element={<Subject />} />
+            <Route path="chapter/:id" element={<Chapter />} />
+            <Route path="ai" element={<AiAssistant />} />
+            <Route path="planner" element={<Planner />} />
+            <Route path="how-to-use" element={<HowToUse />} />
+            <Route path="analytics" element={<Analytics />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 

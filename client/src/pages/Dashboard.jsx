@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Plus, Loader, Book, Send, Target, 
-  Clock, HelpCircle, ArrowRight, ArrowUpRight
+  Clock, HelpCircle, ArrowRight, ArrowUpRight,
+  Orbit, Layers, Zap, Sparkles, CheckCircle2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 // Defined OUTSIDE Dashboard component with CSS Custom Properties for ZERO re-renders on mousemove
 const SpotlightCard = ({ children, className = "" }) => {
@@ -47,6 +49,7 @@ const SpotlightCard = ({ children, className = "" }) => {
 };
 
 const Dashboard = () => {
+  const toast = useToast();
   const [stats, setStats] = useState({ totalSubjects: 0, totalChapters: 0, completedChapters: 0, completionPercentage: 0 });
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +58,9 @@ const Dashboard = () => {
   const [newSubject, setNewSubject] = useState('');
   const [chapterCount, setChapterCount] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  // Completed pomodoro sessions from localStorage
+  const completedPomodoros = parseInt(localStorage.getItem('pomodoro_completed_sessions') || '0', 10);
 
   const loadDashboardData = async () => {
     try {
@@ -81,12 +87,13 @@ const Dashboard = () => {
     setIsCreating(true);
     try {
       await api.post('/subjects', { name: newSubject.trim(), chapterCount });
+      toast.success(`Subject "${newSubject.trim()}" initialized with ${chapterCount} chapters!`, 'Mission Ready');
       setNewSubject('');
       setChapterCount('');
       loadDashboardData();
     } catch (err) {
       const msg = err.response?.data?.msg || err.response?.data?.message || err.message;
-      alert(msg || 'Error creating subject');
+      toast.error(msg || 'Error creating subject', 'Initialization Failed');
     } finally {
       setIsCreating(false);
     }
@@ -99,9 +106,12 @@ const Dashboard = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Workspace Dashboard</span>
+            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Cosmic Station // Dashboard</span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Study Overview</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+            <span>Orbital Overview</span>
+            <Sparkles size={18} className="text-cyan-400 animate-pulse hidden sm:inline" />
+          </h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -122,6 +132,61 @@ const Dashboard = () => {
             <ArrowUpRight size={12} className="text-slate-500" />
           </Link>
         </div>
+      </div>
+
+      {/* Cosmic Telemetry Metrics Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* Metric 1: Planetary Subjects */}
+        <SpotlightCard className="stealth-card p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-mono tracking-widest uppercase text-slate-400">Planetary Subjects</span>
+            <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+              <Orbit size={14} />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-white font-mono">{subjects.length}</div>
+          <p className="text-[11px] text-slate-500 mt-1 font-mono">Active knowledge domains</p>
+        </SpotlightCard>
+
+        {/* Metric 2: Chapters Explored */}
+        <SpotlightCard className="stealth-card p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-mono tracking-widest uppercase text-slate-400">Chapters Explored</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <Layers size={14} />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-white font-mono">
+            {stats.completedChapters} <span className="text-xs text-slate-500 font-normal">/ {stats.totalChapters}</span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1 font-mono">Completed research nodes</p>
+        </SpotlightCard>
+
+        {/* Metric 3: Orbit Completion */}
+        <SpotlightCard className="stealth-card p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-mono tracking-widest uppercase text-slate-400">Orbital Trajectory</span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+              <Target size={14} />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-white font-mono">{stats.completionPercentage}%</div>
+          <div className="h-1 w-full bg-black rounded-full overflow-hidden border border-white/10 mt-2">
+            <div className="h-full bg-gradient-to-r from-cyan-400 to-indigo-400 transition-all duration-700" style={{ width: `${stats.completionPercentage}%` }}></div>
+          </div>
+        </SpotlightCard>
+
+        {/* Metric 4: Focus Velocity */}
+        <SpotlightCard className="stealth-card p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-mono tracking-widest uppercase text-slate-400">Deep Focus</span>
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+              <Zap size={14} />
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-white font-mono">{completedPomodoros * 25}m</div>
+          <p className="text-[11px] text-slate-500 mt-1 font-mono">{completedPomodoros} Focus intervals logged</p>
+        </SpotlightCard>
       </div>
 
       <motion.div 
@@ -151,24 +216,42 @@ const Dashboard = () => {
                   return (
                     <Link key={sub._id} to={`/subject/${sub._id}`}>
                       <motion.div 
-                        whileHover={{ scale: 1.02 }}
+                        whileHover={{ scale: 1.015, y: -2 }}
                         whileTap={{ scale: 0.98 }}
-                        className="stealth-card-inner p-4 hover:bg-white/[0.04] transition-colors cursor-pointer rounded-xl border border-white/5"
+                        className="stealth-card-inner p-4 hover:bg-white/[0.05] transition-all cursor-pointer rounded-xl border border-white/10 group/card"
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex gap-3 items-center">
-                            <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center border border-white/10">
-                              <Book size={18} className="text-slate-300" />
+                            <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center border border-white/10 group-hover/card:border-cyan-400/40 group-hover/card:bg-cyan-400/10 transition-colors">
+                              <Book size={18} className="text-slate-300 group-hover/card:text-cyan-300 transition-colors" />
                             </div>
                             <div>
-                              <h4 className="font-medium text-slate-200">{sub.name}</h4>
-                              <p className="text-xs text-slate-500">{sub.chapters?.length || 0} Chapters</p>
+                              <h4 className="font-semibold text-slate-200 group-hover/card:text-white transition-colors">{sub.name}</h4>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-xs text-slate-500 font-mono">{sub.chapters?.length || 0} Chapters</span>
+                                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                                <span className={`text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.2 rounded ${
+                                  progress === 100 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                  progress > 0 ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
+                                  'bg-white/5 text-slate-400 border border-white/5'
+                                }`}>
+                                  {progress === 100 ? 'Completed' : progress > 0 ? 'In Progress' : 'Pending'}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          <span className="text-xs font-mono font-medium text-slate-400">{progress}%</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-medium text-slate-400">{progress}%</span>
+                            <ArrowRight size={14} className="text-slate-600 group-hover/card:text-white group-hover/card:translate-x-0.5 transition-all" />
+                          </div>
                         </div>
-                        <div className="h-1.5 w-full bg-black rounded-full overflow-hidden border border-white/5">
-                          <div className="h-full bg-white transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                        <div className="h-1.5 w-full bg-black/60 rounded-full overflow-hidden border border-white/10">
+                          <div 
+                            className={`h-full transition-all duration-700 ${
+                              progress === 100 ? 'bg-emerald-400' : 'bg-gradient-to-r from-cyan-400 to-white'
+                            }`} 
+                            style={{ width: `${progress}%` }}
+                          ></div>
                         </div>
                       </motion.div>
                     </Link>

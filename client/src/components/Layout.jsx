@@ -18,17 +18,28 @@ const TopNav = ({ toggleMobileMenu, onReplayIntro }) => {
     { path: '/how-to-use', label: 'How to Use' }
   ];
 
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('user')) || {};
+    } catch {
+      return {};
+    }
+  })();
+
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
   };
 
   return (
     <header className="h-[64px] border-b border-white/[0.08] bg-black/75 backdrop-blur-xl flex items-center justify-between px-6 md:px-10 sticky top-0 z-40 transition-colors">
-      <div className="flex items-center gap-12">
+      <div className="flex items-center gap-8 lg:gap-12">
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-white tracking-tighter">STUDY HUB</span>
-          <span className="text-xs text-slate-500 font-mono hidden md:block">v2.0</span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-slate-400 border border-white/10 hidden md:block">
+            COSMOS v2.5
+          </span>
         </div>
         
         {/* Desktop Nav */}
@@ -48,7 +59,7 @@ const TopNav = ({ toggleMobileMenu, onReplayIntro }) => {
                 {isActive && (
                   <motion.div 
                     layoutId="nav-indicator"
-                    className="absolute inset-0 bg-white/[0.08] rounded-full -z-10"
+                    className="absolute inset-0 bg-white/[0.08] rounded-full -z-10 border border-white/10"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -58,24 +69,38 @@ const TopNav = ({ toggleMobileMenu, onReplayIntro }) => {
         </nav>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <button 
           onClick={onReplayIntro}
-          className="text-xs font-mono px-3 py-1.5 rounded-full border border-white/10 hover:border-white/30 text-slate-400 hover:text-white flex items-center gap-1.5 transition-all bg-white/[0.02]"
-          title="Replay 3D Intro Experience"
+          className="text-xs font-mono px-3 py-1.5 rounded-full border border-white/10 hover:border-white/30 text-slate-400 hover:text-white flex items-center gap-1.5 transition-all bg-white/[0.02] cursor-pointer"
+          title="Replay 3D Space Intro"
         >
-          <Sparkles size={12} className="text-white animate-pulse" />
-          <span>INTRO</span>
+          <Sparkles size={12} className="text-cyan-400 animate-pulse" />
+          <span className="hidden sm:inline">SPACE INTRO</span>
         </button>
-        <button className="text-slate-400 hover:text-white transition-colors relative">
-          <Bell size={18} />
-          <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-white rounded-full"></span>
-        </button>
+
         <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
-        <button onClick={handleLogout} className="w-7 h-7 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-slate-300 hover:bg-white/20 transition-all">
-          <User size={14} />
-        </button>
-        <button onClick={toggleMobileMenu} className="md:hidden text-slate-400 hover:text-white ml-2">
+
+        {/* User Pill & Sign out */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10">
+            <div className="w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-300 text-[10px] font-mono font-bold uppercase">
+              {user.name ? user.name.charAt(0) : 'S'}
+            </div>
+            <span className="text-xs font-mono text-slate-300 hidden lg:inline max-w-[120px] truncate">
+              {user.name || 'Cosmic Student'}
+            </span>
+          </div>
+          <button 
+            onClick={handleLogout} 
+            className="text-xs font-mono px-3 py-1.5 rounded-full bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-white/10 hover:border-rose-500/30 transition-all cursor-pointer"
+            title="Sign out of station"
+          >
+            Exit
+          </button>
+        </div>
+
+        <button onClick={toggleMobileMenu} className="md:hidden text-slate-400 hover:text-white ml-2 p-1 cursor-pointer">
           <Menu size={20} />
         </button>
       </div>

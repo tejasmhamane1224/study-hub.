@@ -281,8 +281,8 @@ const Login = () => {
             {authMode === 'register' && (
               <div>
                 <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Full Name</label>
-                <div className="relative">
-                  <User size={16} className="text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <div className="relative flex items-center">
+                  <User size={18} className="text-slate-400 absolute left-3.5 pointer-events-none z-10 shrink-0" />
                   <input 
                     type="text" 
                     placeholder="Alex Walker" 
@@ -290,7 +290,8 @@ const Login = () => {
                     autoComplete="name"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="stealth-input pl-10 pr-4 py-3 w-full text-sm text-white"
+                    className="stealth-input has-left-icon text-sm text-white w-full"
+                    style={{ paddingLeft: '2.85rem' }}
                   />
                 </div>
               </div>
@@ -298,8 +299,8 @@ const Login = () => {
 
             <div>
               <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Email Address</label>
-              <div className="relative">
-                <Mail size={16} className="text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="relative flex items-center">
+                <Mail size={18} className="text-slate-400 absolute left-3.5 pointer-events-none z-10 shrink-0" />
                 <input 
                   type="email" 
                   placeholder="student@studyhub.internal" 
@@ -307,15 +308,16 @@ const Login = () => {
                   autoComplete="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="stealth-input pl-10 pr-4 py-3 w-full text-sm text-white"
+                  className="stealth-input has-left-icon text-sm text-white w-full"
+                  style={{ paddingLeft: '2.85rem' }}
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Password</label>
-              <div className="relative">
-                <Lock size={16} className="text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="relative flex items-center">
+                <Lock size={18} className="text-slate-400 absolute left-3.5 pointer-events-none z-10 shrink-0" />
                 <input 
                   type={showPassword ? "text" : "password"} 
                   placeholder="••••••••••••" 
@@ -323,15 +325,16 @@ const Login = () => {
                   autoComplete={authMode === 'login' ? "current-password" : "new-password"}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="stealth-input pl-10 pr-11 py-3 w-full text-sm text-white"
+                  className="stealth-input has-both-icons text-sm text-white w-full"
+                  style={{ paddingLeft: '2.85rem', paddingRight: '2.85rem' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 transition-colors cursor-pointer"
+                  className="absolute right-3.5 text-slate-400 hover:text-white p-1 transition-colors cursor-pointer z-10"
                   title={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>

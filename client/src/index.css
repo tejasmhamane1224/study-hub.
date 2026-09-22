@@ -64,7 +64,7 @@
 .stealth-input {
   width: 100% !important;
   display: block !important;
-  padding: 0.75rem 1rem !important;
+  padding: 0.75rem 1rem;
   font-size: 0.875rem !important;
   color: #ffffff !important;
   background: rgba(255, 255, 255, 0.04) !important;
@@ -73,6 +73,19 @@
   outline: none !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: text !important;
+}
+
+.stealth-input.has-left-icon {
+  padding-left: 2.75rem !important;
+}
+
+.stealth-input.has-right-icon {
+  padding-right: 2.75rem !important;
+}
+
+.stealth-input.has-both-icons {
+  padding-left: 2.75rem !important;
+  padding-right: 2.75rem !important;
 }
 
 .stealth-input:focus {

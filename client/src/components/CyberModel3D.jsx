@@ -41,10 +41,10 @@ export const CyberModel3D = ({
 
     if (groupRef.current) {
       if (isHero) {
-        // Hero mode on login: NEVER SHRINK! Maintain stable scale and Z position
+        // Hero mode on login: Maintain centered alignment and stable scale
         const authProgress = Math.min(1, Math.max(0, (scrollProgress - 0.75) / 0.22));
-        const targetPosY = THREE.MathUtils.lerp(0.0, 0.85, authProgress);
-        const targetPosZ = 0.1; // Kept close to camera, never pushed back into the distance
+        const targetPosY = 0.0; // Cleanly centered behind the auth card
+        const targetPosZ = THREE.MathUtils.lerp(0.1, -0.2, authProgress);
 
         groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetPosY, 0.04);
         groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, targetPosZ, 0.04);

@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, LogIn, UserPlus, Loader, AlertCircle, Sparkles, ChevronDown } from 'lucide-react';
+import { 
+  GraduationCap, LogIn, UserPlus, Loader, AlertCircle, 
+  Sparkles, ChevronDown, Mail, Lock, User, Eye, EyeOff, ArrowRight 
+} from 'lucide-react';
 import { AnimatePresence, motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import Lenis from '@studio-freight/lenis';
 import api from '../services/api';
@@ -15,6 +18,7 @@ const Login = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('student');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -229,20 +233,24 @@ const Login = () => {
         >
           {/* Brand Header */}
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white mb-3 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-              <GraduationCap size={24} />
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/10 border border-white/15 text-white mb-3 shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+              <GraduationCap size={24} className="text-cyan-300" />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-white uppercase">STUDY HUB</h1>
-            <p className="text-xs font-mono tracking-widest text-slate-400 mt-1 uppercase">AUTHENTICATION GATE</p>
+            <p className="text-xs font-mono tracking-widest text-slate-400 mt-1 uppercase pb-1 leading-normal">
+              AUTHENTICATION GATE
+            </p>
           </div>
 
           {/* Mode Switcher Tabs (Sign In / Register) */}
-          <div className="grid grid-cols-2 gap-1 p-1 bg-white/5 rounded-xl border border-white/10 mb-6">
+          <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-black/60 rounded-xl border border-white/10 mb-6">
             <button
               type="button"
               onClick={() => { setAuthMode('login'); setError(''); }}
-              className={`py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-all ${
-                authMode === 'login' ? 'bg-white text-black font-bold shadow' : 'text-slate-400 hover:text-white'
+              className={`py-2.5 text-xs font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer font-bold ${
+                authMode === 'login' 
+                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               Sign In
@@ -250,8 +258,10 @@ const Login = () => {
             <button
               type="button"
               onClick={() => { setAuthMode('register'); setError(''); }}
-              className={`py-2 text-xs font-mono uppercase tracking-wider rounded-lg transition-all ${
-                authMode === 'register' ? 'bg-white text-black font-bold shadow' : 'text-slate-400 hover:text-white'
+              className={`py-2.5 text-xs font-mono uppercase tracking-wider rounded-lg transition-all cursor-pointer font-bold ${
+                authMode === 'register' 
+                  ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.25)]' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               Register
@@ -260,8 +270,8 @@ const Login = () => {
 
           {/* Error Notification */}
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2.5 animate-slide-up">
-              <AlertCircle size={16} className="shrink-0" />
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2.5 animate-slide-up">
+              <AlertCircle size={16} className="shrink-0 text-rose-400" />
               <span>{error}</span>
             </div>
           )}
@@ -271,39 +281,59 @@ const Login = () => {
             {authMode === 'register' && (
               <div>
                 <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Full Name</label>
-                <input 
-                  type="text" 
-                  placeholder="Alex Walker" 
-                  required
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="stealth-input"
-                />
+                <div className="relative">
+                  <User size={16} className="text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input 
+                    type="text" 
+                    placeholder="Alex Walker" 
+                    required
+                    autoComplete="name"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    className="stealth-input pl-10 pr-4 py-3 w-full text-sm text-white"
+                  />
+                </div>
               </div>
             )}
 
             <div>
               <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Email Address</label>
-              <input 
-                type="email" 
-                placeholder="student@studyhub.internal" 
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="stealth-input"
-              />
+              <div className="relative">
+                <Mail size={16} className="text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input 
+                  type="email" 
+                  placeholder="student@studyhub.internal" 
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="stealth-input pl-10 pr-4 py-3 w-full text-sm text-white"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-mono tracking-wider text-slate-400 uppercase mb-2">Password</label>
-              <input 
-                type="password" 
-                placeholder="••••••••••••" 
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="stealth-input"
-              />
+              <div className="relative">
+                <Lock size={16} className="text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="••••••••••••" 
+                  required
+                  autoComplete={authMode === 'login' ? "current-password" : "new-password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="stealth-input pl-10 pr-11 py-3 w-full text-sm text-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 transition-colors cursor-pointer"
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             {authMode === 'register' && (
@@ -312,7 +342,7 @@ const Login = () => {
                 <select 
                   value={role}
                   onChange={e => setRole(e.target.value)}
-                  className="stealth-input bg-[#0A0A0A] text-white"
+                  className="stealth-input px-4 py-3 w-full text-sm text-white bg-[#0A0A0E] cursor-pointer"
                 >
                   <option value="student" className="bg-black text-white">Student</option>
                   <option value="teacher" className="bg-black text-white">Teacher / Instructor</option>
@@ -323,7 +353,7 @@ const Login = () => {
             <button 
               type="submit" 
               disabled={loading || isEnteringWorkspace}
-              className="w-full mt-2 py-3.5 bg-white text-black font-bold text-xs uppercase tracking-[0.2em] rounded-xl hover:bg-slate-200 active:scale-[0.98] transition-all duration-200 flex justify-center items-center gap-2 disabled:opacity-80 cursor-pointer shadow-[0_0_25px_rgba(255,255,255,0.2)]"
+              className="w-full mt-2 py-3.5 bg-white text-black font-bold text-xs uppercase tracking-[0.2em] rounded-xl hover:bg-slate-100 active:scale-[0.98] transition-all duration-200 flex justify-center items-center gap-2 disabled:opacity-80 cursor-pointer shadow-[0_0_25px_rgba(255,255,255,0.25)]"
             >
               {isEnteringWorkspace ? (
                 <div className="flex items-center gap-2">
@@ -348,9 +378,9 @@ const Login = () => {
                 setShowIntro(true);
                 window.scrollTo({ top: 0, behavior: 'auto' });
               }}
-              className="text-[10px] font-mono tracking-widest text-slate-500 hover:text-white uppercase inline-flex items-center gap-1.5 transition-colors"
+              className="text-[10px] font-mono tracking-widest text-slate-500 hover:text-white uppercase inline-flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Sparkles size={11} className="text-white" />
+              <Sparkles size={11} className="text-cyan-400" />
               <span>REPLAY 3D INTRO</span>
             </button>
           </div>

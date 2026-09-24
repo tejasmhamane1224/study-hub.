@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FileText, Upload, Zap, ClipboardList, Bot, Send, ArrowLeft, Loader, X, Copy, Check, Sparkles } from 'lucide-react';
+import { FileText, Upload, Zap, ClipboardList, Bot, Send, ArrowLeft, Loader, X, Copy, Check, Sparkles, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { renderFormattedContent } from '../utils/mathRenderer';
 import { useToast } from '../context/ToastContext';
+import SummaryVideo3DPlayer from '../components/SummaryVideo3DPlayer';
 
 // Spotlight Effect Component with HUD & CSS Custom Properties (Zero Re-renders)
 const SpotlightCard = ({ children, className = "" }) => {
@@ -47,12 +48,14 @@ const Chapter = () => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [generatingQuiz, setGeneratingQuiz] = useState(false);
+  const [generatingVideo, setGeneratingVideo] = useState(false);
   
   const [messages, setMessages] = useState([
     { role: 'ai', content: 'Hello! Upload your study material and ask me any questions about it!' }
   ]);
   const [question, setQuestion] = useState('');
   const [quizData, setQuizData] = useState(null);
+  const [videoData, setVideoData] = useState(null);
   const [userAnswers, setUserAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [score, setScore] = useState(0);
@@ -162,6 +165,24 @@ const Chapter = () => {
     }
   };
 
+  const handleGenerateVideo = async () => {
+    setGeneratingVideo(true);
+    try {
+      const res = await api.post(`/ai/summary-video/${id}`);
+      if (res.data?.summaryVideo?.scenes) {
+        setVideoData(res.data.summaryVideo);
+        toast.success('3D Summary Video synthesized successfully!', 'Video Ready');
+      } else {
+        toast.error('Could not parse summary video data. Please try again.', 'Video Generation');
+      }
+    } catch (err) {
+      const serverMsg = err.response?.data?.msg || err.response?.data?.error || err.message;
+      toast.error(serverMsg || 'Video generation failed', 'Error');
+    } finally {
+      setGeneratingVideo(false);
+    }
+  };
+
   const submitQuiz = () => {
     if (!quizData) return;
     let s = 0;
@@ -252,16 +273,27 @@ const Chapter = () => {
 
           <SpotlightCard className="stealth-card p-6">
             <h3 className="text-lg font-medium tracking-tight flex items-center gap-2 mb-2 text-white">
-              <Zap size={18} className="text-slate-400" /> Generate Quiz
+              <Zap size={18} className="text-slate-400" /> AI Tools
             </h3>
-            <p className="text-sm text-slate-500 mb-6">Test your knowledge based on the uploaded material.</p>
-            <button 
-              onClick={handleGenerateQuiz} 
-              disabled={generatingQuiz}
-              className="w-full px-4 py-3 bg-[#111] hover:bg-[#161616] text-white border border-white/10 rounded-xl transition-all font-medium flex justify-center items-center gap-2 disabled:opacity-50"
-            >
-              {generatingQuiz ? <Loader className="animate-spin" size={18} /> : <><ClipboardList size={18} /> Generate Quiz</>}
-            </button>
+            <p className="text-sm text-slate-500 mb-6">Test your knowledge or synthesize a 3D video summary based on the uploaded material.</p>
+            
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={handleGenerateQuiz} 
+                disabled={generatingQuiz || generatingVideo}
+                className="w-full px-4 py-3 bg-[#111] hover:bg-[#161616] text-white border border-white/10 rounded-xl transition-all font-medium flex justify-center items-center gap-2 disabled:opacity-50"
+              >
+                {generatingQuiz ? <Loader className="animate-spin" size={18} /> : <><ClipboardList size={18} /> Generate Quiz</>}
+              </button>
+
+              <button 
+                onClick={handleGenerateVideo} 
+                disabled={generatingVideo || generatingQuiz}
+                className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600/80 to-purple-600/80 hover:from-indigo-500 hover:to-purple-500 text-white border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)] rounded-xl transition-all font-medium flex justify-center items-center gap-2 disabled:opacity-50"
+              >
+                {generatingVideo ? <Loader className="animate-spin" size={18} /> : <><Play size={18} /> 3D Video Summary</>}
+              </button>
+            </div>
           </SpotlightCard>
         </div>
 
@@ -449,6 +481,16 @@ const Chapter = () => {
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 3D Video Player Overlay */}
+      <AnimatePresence>
+        {videoData && (
+          <SummaryVideo3DPlayer 
+            scenes={videoData.scenes} 
+            onClose={() => setVideoData(null)} 
+          />
         )}
       </AnimatePresence>
     </div>

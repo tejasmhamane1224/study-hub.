@@ -182,3 +182,66 @@ Format guidelines:
         res.status(500).json({ msg: err.message || 'Error generating AI response' });
     }
 };
+
+exports.generateSummaryVideo = async (req, res) => {
+    try {
+        let pdf = await PDF.findOne({ chapter: req.params.chapterId, user: req.user.id });
+        if (!pdf) {
+            pdf = await PDF.findOne({ chapter: req.params.chapterId });
+        }
+
+        let documentText = '';
+        if (pdf) {
+            const chunks = await PdfChunk.find({ pdf: pdf._id }).sort('chunkIndex').limit(60);
+            documentText = chunks.map(c => c.textContent).join('\n\n');
+        }
+
+        const prompt = `Analyze the following academic text and generate a structured 3D video storyboard for a cinematic, space-themed summary presentation.
+${documentText ? "=== Context Text ===\n" + documentText + "\n====================\n" : "Context: General Chapter Study Material\n"}
+
+You MUST return the output EXACTLY as a valid JSON object with the following schema, and NO extra conversational text, markdown, or backticks. Make sure there are at least 4 scenes outlining the best summary and explanation of the material.
+Schema:
+{
+  "scenes": [
+    {
+      "duration": 5, // duration in seconds, integer
+      "voiceScript": "Narration text for this scene...",
+      "keyPoint": "Short text floating in 3D (3-6 words max)",
+      "visualMode": "galaxy" // one of: galaxy, particles, wireframe, nebula
+    }
+  ]
+}`;
+
+        const videoJsonText = await aiService.generateResponse(prompt);
+        let videoData = null;
+        try {
+            let cleaned = videoJsonText.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                cleaned = jsonMatch[0];
+            }
+            videoData = JSON.parse(cleaned);
+        } catch (e) {
+            console.error("Failed to parse video JSON:", videoJsonText);
+            videoData = {
+                scenes: [
+                    {
+                        duration: 8,
+                        voiceScript: "Welcome to the summary of this chapter. Let's explore the key concepts together in this cosmic journey.",
+                        keyPoint: "Chapter Overview",
+                        visualMode: "galaxy"
+                    }
+                ]
+            };
+        }
+
+        // Cache it in the Chapter model
+        const Chapter = require('../models/Chapter');
+        await Chapter.findByIdAndUpdate(req.params.chapterId, { summaryVideo: videoData });
+
+        res.json({ summaryVideo: videoData });
+    } catch (err) {
+        console.error('Summary Video Error:', err);
+        res.status(500).json({ msg: err.message || 'Error generating summary video' });
+    }
+};

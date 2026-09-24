@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Stars, Float, Text, OrbitControls, Sparkles, Sphere, MeshDistortMaterial } from '@react-three/drei';
+import { Stars, Float, Text, OrbitControls, Sparkles, Sphere, MeshDistortMaterial, Billboard } from '@react-three/drei';
 import { Play, Pause, X, Volume2, VolumeX, SkipForward, SkipBack } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -42,20 +42,22 @@ const WireframeScene = () => (
 const SceneText = ({ text }) => {
   return (
     <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-      <Text
-        fontSize={1}
-        maxWidth={8}
-        lineHeight={1.2}
-        textAlign="center"
-        position={[0, 0, 2]}
-        color="#ffffff"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.05}
-        outlineColor="#000000"
-      >
-        {text}
-      </Text>
+      <Billboard>
+        <Text
+          fontSize={1}
+          maxWidth={8}
+          lineHeight={1.2}
+          textAlign="center"
+          position={[0, 0, 2]}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.05}
+          outlineColor="#000000"
+        >
+          {text}
+        </Text>
+      </Billboard>
     </Float>
   );
 };
@@ -107,7 +109,10 @@ const SummaryVideo3DPlayer = ({ scenes, onClose }) => {
     if (isPlaying) {
       speakCurrentScene();
       
-      const durationMs = (currentScene.duration || 5) * 1000;
+      // Calculate optimal duration based on speaking rate (~2.5 words per second) plus 1s buffer
+      const wordCount = currentScene.voiceScript ? currentScene.voiceScript.split(' ').length : 10;
+      const calculatedDurationSecs = Math.max(currentScene.duration || 5, (wordCount / 2.5) + 1);
+      const durationMs = calculatedDurationSecs * 1000;
       const startTime = Date.now();
       
       progressInterval.current = setInterval(() => {

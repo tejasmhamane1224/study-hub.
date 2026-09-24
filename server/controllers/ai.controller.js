@@ -199,7 +199,11 @@ exports.generateSummaryVideo = async (req, res) => {
         const prompt = `Analyze the following academic text and generate a structured 3D video storyboard for a cinematic, space-themed summary presentation.
 ${documentText ? "=== Context Text ===\n" + documentText + "\n====================\n" : "Context: General Chapter Study Material\n"}
 
-You MUST return the output EXACTLY as a valid JSON object with the following schema, and NO extra conversational text, markdown, or backticks. Make sure there are at least 4 scenes outlining the best summary and explanation of the material.
+You MUST return the output EXACTLY as a valid JSON object with the following schema, and NO extra conversational text, markdown, or backticks. 
+CRITICAL RULES FOR VIDEO PACING:
+1. Break the summary down into MANY short, fast-paced scenes (generate between 8 to 15 scenes). 
+2. Each scene must have a very short `voiceScript` (1 to 2 sentences MAXIMUM) so the slides change frequently to match the flow of the narration.
+3. Accurately estimate the `duration` in seconds based on the voiceScript length (assume 2.5 words per second).
 Schema:
 {
   "scenes": [

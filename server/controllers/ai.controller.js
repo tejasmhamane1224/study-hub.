@@ -196,22 +196,30 @@ exports.generateSummaryVideo = async (req, res) => {
             documentText = chunks.map(c => c.textContent).join('\n\n');
         }
 
-        const prompt = `Analyze the following academic text and generate a structured 3D video storyboard for a cinematic, space-themed summary presentation.
-${documentText ? "=== Context Text ===\n" + documentText + "\n====================\n" : "Context: General Chapter Study Material\n"}
+        const prompt = `You are a cinematic documentary producer. Analyze the following academic text and create a detailed, structured 3D video storyboard for an immersive space-themed summary presentation.
+${documentText ? "=== SOURCE MATERIAL ===\n" + documentText + "\n=======================\n" : "Context: General Chapter Study Material\n"}
 
-You MUST return the output EXACTLY as a valid JSON object with the following schema, and NO extra conversational text, markdown, or backticks. 
-CRITICAL RULES FOR VIDEO PACING:
-1. Break the summary down into MANY short, fast-paced scenes (generate between 8 to 15 scenes). 
-2. Each scene must have a very short `voiceScript` (1 to 2 sentences MAXIMUM) so the slides change frequently to match the flow of the narration.
-3. Accurately estimate the `duration` in seconds based on the voiceScript length (assume 2.5 words per second).
-Schema:
+STRICT OUTPUT RULES:
+- Return ONLY a valid JSON object. No markdown, no backticks, no extra text.
+- Generate between 10 and 15 scenes for a comprehensive, flowing presentation.
+
+SCENE STRUCTURE RULES:
+1. Scene 1 must be an INTRODUCTION scene: welcome the viewer and state what topic will be covered.
+2. Scenes 2 through N-1 must cover EACH major concept/topic from the material. One concept per scene. Go in logical order.
+3. The FINAL scene must be a CONCLUSION: summarize the key takeaways.
+4. Each voiceScript must be exactly 1 to 2 sentences (15-30 words). Keep it punchy and clear.
+5. Each keyPoint must be 2-5 words that capture the essence of the scene (displayed as floating 3D text).
+6. Set duration as an integer = ceil(word_count_of_voiceScript / 2.5) + 1.
+7. Vary the visualMode across scenes to keep it visually dynamic. Use ALL of these modes at least once: galaxy, nebula, particles, wireframe, solar, matrix.
+
+JSON Schema:
 {
   "scenes": [
     {
-      "duration": 5, // duration in seconds, integer
+      "duration": 6,
       "voiceScript": "Narration text for this scene...",
-      "keyPoint": "Short text floating in 3D (3-6 words max)",
-      "visualMode": "galaxy" // one of: galaxy, particles, wireframe, nebula
+      "keyPoint": "Floating 3D Label",
+      "visualMode": "galaxy"
     }
   ]
 }`;

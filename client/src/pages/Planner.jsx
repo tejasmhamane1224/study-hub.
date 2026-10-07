@@ -100,6 +100,18 @@ const Planner = () => {
     return () => clearInterval(interval);
   }, [isRunning, timerMode, completedSessions, playChime]);
 
+  // Prevent leaving page during focus session
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isRunning && timerMode === 'focus') {
+        e.preventDefault();
+        e.returnValue = 'Focus session in progress. Are you sure you want to leave?';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isRunning, timerMode]);
+
   const switchMode = (modeKey) => {
     setIsRunning(false);
     setTimerMode(modeKey);
@@ -164,256 +176,302 @@ const Planner = () => {
   const percentage = tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100);
 
   return (
-    <div className="pb-16 max-w-7xl mx-auto">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Focus Command Center</span>
-          </div>
-          <h2 className="text-3xl font-bold flex items-center gap-3 text-white tracking-tight">
-            <CalendarCheck className="text-white" /> Focus & Study Planner
-          </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Combine 25-minute Pomodoro sprints with micro-task scheduling to enter sustained cognitive flow.
-          </p>
-        </div>
+    <>
+      {/* FULL SCREEN FOCUS BLOCKER */}
+      {isRunning && timerMode === 'focus' && (
+        <div className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center overflow-hidden">
+          {/* Subtle animated background elements */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(52,211,153,0.08)_0,transparent_60%)]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-white/5 rounded-full animate-[spin_60s_linear_infinite]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full animate-[spin_40s_linear_infinite_reverse]" />
 
-        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-slate-300">
-          <span className="text-emerald-400 font-bold">25m</span> Focus
-          <span className="text-slate-500">➔</span>
-          <span className="text-cyan-400 font-bold">5m</span> Break
-          <span className="text-slate-500">➔</span>
-          <span className="text-purple-400 font-bold">4x</span> Cycles
-        </div>
-      </div>
+          <div className="relative z-10 flex flex-col items-center">
+            <Brain className="w-12 h-12 text-emerald-400 mb-6 animate-pulse" />
+            <h2 className="text-xl sm:text-2xl font-mono text-emerald-400 tracking-[0.4em] uppercase mb-10 text-center">
+              Deep Work Protocol
+            </h2>
 
-      {/* TOP SECTION: Pomodoro Timer & Quick Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-        {/* Main Pomodoro Clock Card */}
-        <div className="lg:col-span-7 stealth-card p-6 md:p-8 flex flex-col items-center justify-between border border-white/10 relative overflow-hidden group">
-          {/* Subtle background glow */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
-
-          {/* Mode Switcher Tabs */}
-          <div className="flex bg-white/[0.04] p-1 rounded-xl border border-white/10 gap-1 w-full max-w-md z-10">
-            {Object.entries(MODES).map(([key, val]) => (
-              <button
-                key={key}
-                onClick={() => switchMode(key)}
-                className={`flex-1 py-2 text-xs font-mono rounded-lg transition-all ${
-                  timerMode === key 
-                    ? 'bg-white text-black font-semibold shadow-[0_0_12px_rgba(255,255,255,0.25)]' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {val.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Status Tag */}
-          <div className="flex items-center gap-2 mt-4 z-10">
-            <span className={`w-2 h-2 rounded-full ${isRunning ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
-            <span className="text-xs font-mono font-medium text-slate-300 tracking-[0.25em] uppercase">
-              {MODES[timerMode].tag} • {MODES[timerMode].desc}
-            </span>
-          </div>
-
-          {/* Giant Time Display */}
-          <div className="relative flex flex-col items-center justify-center my-6 z-10">
-            <div className="text-[84px] sm:text-[104px] leading-none font-light tracking-tighter text-white tabular-nums flex items-baseline drop-shadow-[0_4px_30px_rgba(0,0,0,0.95)] select-none">
-              {m}<span className={`text-[54px] text-slate-400 mx-1 mb-2 ${isRunning ? 'animate-pulse' : ''}`}>:</span>{s}
+            <div className="text-[100px] sm:text-[160px] leading-none font-light tracking-tighter text-white tabular-nums flex items-baseline drop-shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+              {m}<span className="text-slate-600 mx-2 sm:mx-4 animate-pulse">:</span>{s}
             </div>
-            {/* Progress line */}
-            <div className="w-56 h-1.5 bg-white/10 rounded-full mt-3 overflow-hidden">
+
+            <div className="w-64 sm:w-96 h-1.5 bg-white/10 rounded-full mt-10 overflow-hidden relative">
               <div 
-                className="h-full bg-white transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                className="absolute top-0 left-0 h-full bg-emerald-400 transition-all duration-1000 ease-linear shadow-[0_0_15px_rgba(52,211,153,0.8)]"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 w-full max-w-md z-10">
-            <button 
-              onClick={toggleTimer}
-              className={`flex-1 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
-                isRunning 
-                  ? 'bg-white/10 text-white hover:bg-white/15 border border-white/20' 
-                  : 'bg-white text-black hover:bg-slate-200 hover:scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-95'
-              }`}
-            >
-              {isRunning ? <><Pause size={18} /> Pause Session</> : <><Play size={18} /> Start Focus</>}
-            </button>
-            <button 
-              onClick={resetTimer}
-              className="px-4 py-3.5 rounded-xl font-medium bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 border border-white/10 active:scale-95 transition-all flex items-center justify-center"
-              title="Reset Timer"
-            >
-              <RotateCcw size={18} />
-            </button>
-            <button 
-              onClick={addFiveMinutes}
-              className="px-4 py-3.5 rounded-xl font-mono text-xs text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 active:scale-95 transition-all"
-              title="Extend session by 5 minutes"
-            >
-              +5m
-            </button>
-          </div>
+            <p className="mt-10 text-slate-400 text-sm max-w-sm text-center leading-relaxed font-mono">
+              Site navigation is locked.<br/>
+              Protect your attention.
+            </p>
 
-          {/* Cycle Indicators */}
-          <div className="mt-5 flex items-center gap-2.5 z-10">
-            {[0, 1, 2, 3].map((idx) => {
-              const isDone = (completedSessions % 4) > idx || (completedSessions > 0 && completedSessions % 4 === 0);
-              return (
-                <div 
-                  key={idx}
-                  title={`Session ${idx + 1} of 4`}
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                    isDone 
-                      ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.9)] scale-110' 
-                      : 'bg-white/20'
-                  }`}
-                />
-              );
-            })}
-            <span className="text-xs font-mono text-slate-400 ml-2">
-              Sprint {(completedSessions % 4) + 1} of 4 ({completedSessions} Total Sessions)
-            </span>
+            <button 
+              onClick={() => {
+                if(window.confirm('Are you sure you want to abandon this focus session? This will break your flow.')) {
+                  toggleTimer();
+                }
+              }}
+              className="mt-16 px-6 py-2 rounded-full text-xs font-mono text-slate-600 hover:text-red-400 hover:bg-red-400/10 hover:border-red-400/30 border border-transparent transition-all"
+            >
+              [ ABANDON SESSION ]
+            </button>
           </div>
         </div>
+      )}
 
-        {/* Right: Goal Progress Ring & Focus Protocol Tips */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          {/* Circular Progress Ring */}
-          <div className="stealth-card p-6 border border-white/10 flex flex-col items-center justify-center min-h-[260px]">
-            {(() => {
-              const radius = 64;
-              const circumference = 2 * Math.PI * radius;
-              const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-              return (
-                <div className="relative w-40 h-40 flex items-center justify-center mb-3">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 160 160">
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r={radius}
-                      stroke="rgba(255, 255, 255, 0.08)"
-                      strokeWidth="8"
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r={radius}
-                      stroke="#ffffff"
-                      strokeWidth="8"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={strokeDashoffset}
-                      strokeLinecap="round"
-                      fill="transparent"
-                      className="transition-all duration-700 ease-out"
-                      style={{
-                        filter: percentage === 100 ? 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.6))' : 'none'
-                      }}
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center justify-center">
-                    <h2 className="text-3xl font-black text-white tracking-tighter">
-                      {percentage}%
-                    </h2>
-                    <p className="text-[9px] text-slate-400 font-mono tracking-[0.25em] uppercase">GOALS DONE</p>
-                  </div>
-                </div>
-              );
-            })()}
-            <h3 className="text-base font-semibold text-white">Daily Target Completion</h3>
-            <p className="text-xs text-slate-400 text-center mt-1">
-              {completedCount} of {tasks.length} tasks completed today
-            </p>
-          </div>
-
-          {/* Quick Focus Science Reminder */}
-          <div className="stealth-card p-5 border border-white/10 bg-white/[0.02]">
-            <div className="flex items-center gap-2 mb-2 text-white font-medium text-sm">
-              <Brain size={16} className="text-emerald-400" />
-              <span>The 25/5 Deep Work Principle</span>
+      <div className="pb-16 max-w-7xl mx-auto">
+        {/* Header Banner */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Focus Command Center</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              25 minutes of zero-distraction focus prevents cognitive fatigue and beats Parkinson's Law. Never look at phones during 5-minute break intervals.
+            <h2 className="text-3xl font-bold flex items-center gap-3 text-white tracking-tight">
+              <CalendarCheck className="text-white" /> Focus & Study Planner
+            </h2>
+            <p className="text-sm text-slate-400 mt-1">
+              Combine 25-minute Pomodoro sprints with micro-task scheduling to enter sustained cognitive flow.
             </p>
           </div>
-        </div>
-      </div>
-      
-      {/* BOTTOM SECTION: Today's Tasks & Quick Reminders */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Today's Tasks */}
-        <div className="stealth-card p-6 border border-white/10 shadow-lg">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Today's Tasks</h3>
-            <span className="text-xs font-mono text-slate-400">{tasks.length} Total</span>
-          </div>
-          
-          <form onSubmit={addTask} className="flex gap-3 mb-6">
-            <input 
-              type="text" 
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              placeholder="E.g., Finish Chapter 3 practice quiz, read lecture notes..."
-              className="stealth-input flex-1 py-3 px-4 rounded-xl text-sm"
-            />
-            <button type="submit" className="px-5 py-3 bg-white text-black font-semibold rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
-              <Plus size={20} />
-            </button>
-          </form>
 
-          <div className="flex flex-col gap-3 max-h-[320px] overflow-y-auto custom-scrollbar pr-1">
-            {tasks.length === 0 ? (
-              <p className="text-slate-400 text-center py-8 text-sm">Your planner is empty. Add a task above!</p>
-            ) : (
-              tasks.map(task => (
-                <div 
-                  key={task.id} 
-                  className={`flex justify-between items-center p-3.5 rounded-xl border transition-all duration-300 ${
-                    task.completed 
-                      ? 'bg-white/[0.02] border-white/5 opacity-50' 
-                      : 'bg-white/[0.04] border-white/10 hover:border-white/20'
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-slate-300">
+            <span className="text-emerald-400 font-bold">25m</span> Focus
+            <span className="text-slate-500">➔</span>
+            <span className="text-cyan-400 font-bold">5m</span> Break
+            <span className="text-slate-500">➔</span>
+            <span className="text-purple-400 font-bold">4x</span> Cycles
+          </div>
+        </div>
+
+        {/* TOP SECTION: Pomodoro Timer & Quick Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+          {/* Main Pomodoro Clock Card */}
+          <div className="lg:col-span-7 stealth-card p-6 md:p-8 flex flex-col items-center justify-between border border-white/10 relative overflow-hidden group">
+            {/* Subtle background glow */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
+
+            {/* Mode Switcher Tabs */}
+            <div className="flex bg-white/[0.04] p-1 rounded-xl border border-white/10 gap-1 w-full max-w-md z-10">
+              {Object.entries(MODES).map(([key, val]) => (
+                <button
+                  key={key}
+                  onClick={() => switchMode(key)}
+                  className={`flex-1 py-2 text-xs font-mono rounded-lg transition-all ${
+                    timerMode === key 
+                      ? 'bg-white text-black font-semibold shadow-[0_0_12px_rgba(255,255,255,0.25)]' 
+                      : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => toggleTask(task.id)}>
-                    {task.completed ? <CheckCircle2 className="text-white" size={18} /> : <Circle className="text-slate-500" size={18} />}
-                    <span className={`text-sm ${task.completed ? 'text-slate-500 line-through font-mono' : 'text-slate-200'}`}>
-                      {task.text}
-                    </span>
+                  {val.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Status Tag */}
+            <div className="flex items-center gap-2 mt-4 z-10">
+              <span className={`w-2 h-2 rounded-full ${isRunning ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
+              <span className="text-xs font-mono font-medium text-slate-300 tracking-[0.25em] uppercase">
+                {MODES[timerMode].tag} • {MODES[timerMode].desc}
+              </span>
+            </div>
+
+            {/* Giant Time Display */}
+            <div className="relative flex flex-col items-center justify-center my-6 z-10">
+              <div className="text-[84px] sm:text-[104px] leading-none font-light tracking-tighter text-white tabular-nums flex items-baseline drop-shadow-[0_4px_30px_rgba(0,0,0,0.95)] select-none">
+                {m}<span className={`text-[54px] text-slate-400 mx-1 mb-2 ${isRunning ? 'animate-pulse' : ''}`}>:</span>{s}
+              </div>
+              {/* Progress line */}
+              <div className="w-56 h-1.5 bg-white/10 rounded-full mt-3 overflow-hidden">
+                <div 
+                  className="h-full bg-white transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 w-full max-w-md z-10">
+              <button 
+                onClick={toggleTimer}
+                className={`flex-1 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
+                  isRunning 
+                    ? 'bg-white/10 text-white hover:bg-white/15 border border-white/20' 
+                    : 'bg-white text-black hover:bg-slate-200 hover:scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-95'
+                }`}
+              >
+                {isRunning ? <><Pause size={18} /> Pause Session</> : <><Play size={18} /> Start Focus</>}
+              </button>
+              <button 
+                onClick={resetTimer}
+                className="px-4 py-3.5 rounded-xl font-medium bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 border border-white/10 active:scale-95 transition-all flex items-center justify-center"
+                title="Reset Timer"
+              >
+                <RotateCcw size={18} />
+              </button>
+              <button 
+                onClick={addFiveMinutes}
+                className="px-4 py-3.5 rounded-xl font-mono text-xs text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 active:scale-95 transition-all"
+                title="Extend session by 5 minutes"
+              >
+                +5m
+              </button>
+            </div>
+
+            {/* Cycle Indicators */}
+            <div className="mt-5 flex items-center gap-2.5 z-10">
+              {[0, 1, 2, 3].map((idx) => {
+                const isDone = (completedSessions % 4) > idx || (completedSessions > 0 && completedSessions % 4 === 0);
+                return (
+                  <div 
+                    key={idx}
+                    title={`Session ${idx + 1} of 4`}
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                      isDone 
+                        ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.9)] scale-110' 
+                        : 'bg-white/20'
+                    }`}
+                  />
+                );
+              })}
+              <span className="text-xs font-mono text-slate-400 ml-2">
+                Sprint {(completedSessions % 4) + 1} of 4 ({completedSessions} Total Sessions)
+              </span>
+            </div>
+          </div>
+
+          {/* Right: Goal Progress Ring & Focus Protocol Tips */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            {/* Circular Progress Ring */}
+            <div className="stealth-card p-6 border border-white/10 flex flex-col items-center justify-center min-h-[260px]">
+              {(() => {
+                const radius = 64;
+                const circumference = 2 * Math.PI * radius;
+                const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+                return (
+                  <div className="relative w-40 h-40 flex items-center justify-center mb-3">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 160 160">
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r={radius}
+                        stroke="rgba(255, 255, 255, 0.08)"
+                        strokeWidth="8"
+                        fill="transparent"
+                      />
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r={radius}
+                        stroke="#ffffff"
+                        strokeWidth="8"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        strokeLinecap="round"
+                        fill="transparent"
+                        className="transition-all duration-700 ease-out"
+                        style={{
+                          filter: percentage === 100 ? 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.6))' : 'none'
+                        }}
+                      />
+                    </svg>
+                    <div className="absolute flex flex-col items-center justify-center">
+                      <h2 className="text-3xl font-black text-white tracking-tighter">
+                        {percentage}%
+                      </h2>
+                      <p className="text-[9px] text-slate-400 font-mono tracking-[0.25em] uppercase">GOALS DONE</p>
+                    </div>
                   </div>
-                  <button onClick={() => deleteTask(task.id)} className="text-slate-500 hover:text-white transition-colors ml-4">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))
-            )}
+                );
+              })()}
+              <h3 className="text-base font-semibold text-white">Daily Target Completion</h3>
+              <p className="text-xs text-slate-400 text-center mt-1">
+                {completedCount} of {tasks.length} tasks completed today
+              </p>
+            </div>
+
+            {/* Quick Focus Science Reminder */}
+            <div className="stealth-card p-5 border border-white/10 bg-white/[0.02]">
+              <div className="flex items-center gap-2 mb-2 text-white font-medium text-sm">
+                <Brain size={16} className="text-emerald-400" />
+                <span>The 25/5 Deep Work Principle</span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                25 minutes of zero-distraction focus prevents cognitive fatigue and beats Parkinson's Law. Never look at phones during 5-minute break intervals.
+              </p>
+            </div>
           </div>
         </div>
+        
+        {/* BOTTOM SECTION: Today's Tasks & Quick Reminders */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Today's Tasks */}
+          <div className="stealth-card p-6 border border-white/10 shadow-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-white">Today's Tasks</h3>
+              <span className="text-xs font-mono text-slate-400">{tasks.length} Total</span>
+            </div>
+            
+            <form onSubmit={addTask} className="flex gap-3 mb-6">
+              <input 
+                type="text" 
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                placeholder="E.g., Finish Chapter 3 practice quiz, read lecture notes..."
+                className="stealth-input flex-1 py-3 px-4 rounded-xl text-sm"
+              />
+              <button type="submit" className="px-5 py-3 bg-white text-black font-semibold rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
+                <Plus size={20} />
+              </button>
+            </form>
 
-        {/* Quick Reminders Scratchpad */}
-        <div className="stealth-card p-6 border border-white/10 shadow-lg flex flex-col">
-          <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-            <span className="p-2 bg-white/5 text-white rounded-lg"><CalendarCheck size={18} /></span> 
-            Quick Reminders & Formulas
-          </h3>
-          <textarea 
-            value={reminders}
-            onChange={handleReminderChange}
-            placeholder="Jot down quick study thoughts, formulas to memorize, exam deadlines, or chapter notes here... (Saves automatically)"
-            className="stealth-input flex-1 w-full min-h-[220px] resize-none p-4 text-sm"
-          ></textarea>
+            <div className="flex flex-col gap-3 max-h-[320px] overflow-y-auto custom-scrollbar pr-1">
+              {tasks.length === 0 ? (
+                <p className="text-slate-400 text-center py-8 text-sm">Your planner is empty. Add a task above!</p>
+              ) : (
+                tasks.map(task => (
+                  <div 
+                    key={task.id} 
+                    className={`flex justify-between items-center p-3.5 rounded-xl border transition-all duration-300 ${
+                      task.completed 
+                        ? 'bg-white/[0.02] border-white/5 opacity-50' 
+                        : 'bg-white/[0.04] border-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => toggleTask(task.id)}>
+                      {task.completed ? <CheckCircle2 className="text-white" size={18} /> : <Circle className="text-slate-500" size={18} />}
+                      <span className={`text-sm ${task.completed ? 'text-slate-500 line-through font-mono' : 'text-slate-200'}`}>
+                        {task.text}
+                      </span>
+                    </div>
+                    <button onClick={() => deleteTask(task.id)} className="text-slate-500 hover:text-white transition-colors ml-4">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quick Reminders Scratchpad */}
+          <div className="stealth-card p-6 border border-white/10 shadow-lg flex flex-col">
+            <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+              <span className="p-2 bg-white/5 text-white rounded-lg"><CalendarCheck size={18} /></span> 
+              Quick Reminders & Formulas
+            </h3>
+            <textarea 
+              value={reminders}
+              onChange={handleReminderChange}
+              placeholder="Jot down quick study thoughts, formulas to memorize, exam deadlines, or chapter notes here... (Saves automatically)"
+              className="stealth-input flex-1 w-full min-h-[220px] resize-none p-4 text-sm"
+            ></textarea>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -1,0 +1,18 @@
+# explain-my-own-code (emc) configuration
+
+[emc]
+# Enforcement mode: "off" (disabled), "warn" (alert only), "gate" (block commit)
+mode = "warn"
+
+# Default model identifier
+model = "claude-3-7-sonnet-latest"
+
+# Per-session budget in USD and max tokens
+max_cost_dollars = 0.50
+token_budget = 50000
+
+# Allow developers to pass --skip during git commit
+skip_allowed = true
+
+# Add Comprehension trailer to git commit message
+commit_trailer = true
